@@ -14,6 +14,7 @@ from airoom.commands.upgrade import upgrade_command
 from airoom.commands.uninstall import uninstall_command
 from airoom.commands_typer.status import status
 from airoom.commands_typer.doctor import doctor
+from airoom.commands_typer.registry import registry_app
 
 console = Console()
 
@@ -191,6 +192,7 @@ def _legacy_uninstall(
 # Register Typer commands
 app.command("status", help="Show project health summary")(status)
 app.command("doctor", help="Diagnose and repair common issues")(doctor)
+app.add_typer(registry_app, name="registry")
 
 # Register legacy commands at top level (for backward compatibility)
 app.command("init", help="Initialize AIroom in a project")(_legacy_init)
