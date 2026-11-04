@@ -16,6 +16,7 @@ from airoom.commands_typer.status import status
 from airoom.commands_typer.doctor import doctor
 from airoom.commands_typer.registry import registry_app
 from airoom.commands_typer.discover import discover
+from airoom.commands_typer.organize import organize
 
 console = Console()
 
@@ -194,6 +195,7 @@ def _legacy_uninstall(
 app.command("status", help="Show project health summary")(status)
 app.command("doctor", help="Diagnose and repair common issues")(doctor)
 app.command("discover", help="Discover AI artifacts and registry discrepancies")(discover)
+app.command("organize", help="Organize artifacts under airoom/artifacts/")(organize)
 app.add_typer(registry_app, name="registry")
 
 # Register legacy commands at top level (for backward compatibility)
