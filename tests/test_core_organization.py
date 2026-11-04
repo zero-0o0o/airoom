@@ -86,9 +86,8 @@ class TestOrganizationEngine:
         self.project.airoom_dir.mkdir(parents=True, exist_ok=True)
         self.project.artifacts_dir.mkdir(parents=True, exist_ok=True)
         self.manager = RegistryManager(self.project)
-        self.baseline = BaselineManager(self.project)
         self.discovery = DiscoveryEngine(self.project, self.manager)
-        self.engine = OrganizationEngine(self.project, self.manager, self.baseline)
+        self.engine = OrganizationEngine(self.project, self.manager)
 
     def teardown_method(self):
         """Clean up temporary directory."""
@@ -99,7 +98,6 @@ class TestOrganizationEngine:
         """Test OrganizationEngine initialization with all dependencies."""
         assert self.engine.project == self.project
         assert self.engine.registry == self.manager
-        assert self.engine.baseline == self.baseline
 
     def test_plan_non_interactive_managed_candidates(self):
         """Test plan creates relocation actions for managed candidates."""
@@ -109,7 +107,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         assert isinstance(plan, RelocationPlan)
         # Should have at least one action for Graphify
@@ -129,7 +127,7 @@ class TestOrganizationEngine:
         (claude_dir / "settings.json").write_text('{}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         claude_actions = [a for a in plan.actions if a.tool_id == "Claude"]
         assert len(claude_actions) >= 1
@@ -145,7 +143,7 @@ class TestOrganizationEngine:
 
         report = self.discovery.scan()
         # Interactive mode should still produce a plan (UI would filter)
-        plan = self.engine.plan(report, interactive=True)
+        plan = self.engine.plan(report)
 
         assert isinstance(plan, RelocationPlan)
         # In non-interactive implementation, interactive flag doesn't change behavior yet
@@ -158,7 +156,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         assert "Graphify" in plan.tool_configs
         config = plan.tool_configs["Graphify"]
@@ -174,7 +172,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         # Record initial state
         initial_files = set(self.project_root.rglob("*"))
@@ -194,7 +192,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         success, messages = self.engine.execute(plan, dry_run=False)
 
@@ -220,7 +218,7 @@ class TestOrganizationEngine:
         (claude_dir / "settings.json").write_text('{}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         success, messages = self.engine.execute(plan, dry_run=False)
 
@@ -410,7 +408,9 @@ class TestOrganizationEngine:
         assert tool["name"] == "TestTool"
         assert tool["status"] == "active"
         assert tool["config_path"] == "airoom/artifacts/test"
-        # Note: output_env is not a standard field but we store it
+        # output_env is now stored in config sub-dict
+        assert "config" in tool
+        assert tool["config"]["output_env"] == "TEST_ENV"
 
     def test_register_artifact(self):
         """Test _register_artifact adds artifact to registry."""
@@ -528,7 +528,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         # We need to simulate verification failure - for now test passes
         # since verification is basic existence check
@@ -543,7 +543,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
         self.engine.execute(plan, dry_run=False)
 
         gitignore = self.project_root / ".gitignore"
@@ -558,7 +558,7 @@ class TestOrganizationEngine:
         brainstorm.write_text("Brainstorming session...")
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         brainstorm_actions = [a for a in plan.actions if a.tool_id == "Brainstorm"]
         assert len(brainstorm_actions) >= 1
@@ -572,7 +572,7 @@ class TestOrganizationEngine:
         (plans_dir / "plan.md").write_text("# Plan")
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         plans_actions = [a for a in plan.actions if a.tool_id == "LLM Plans"]
         assert len(plans_actions) >= 1
@@ -586,7 +586,7 @@ class TestOrganizationEngine:
         (sp_dir / "session.md").write_text("# Session")
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
 
         sp_actions = [a for a in plan.actions if a.tool_id == "Superpowers"]
         assert len(sp_actions) >= 1
@@ -601,7 +601,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
         self.engine.execute(plan, dry_run=False)
 
         target = self.project.artifacts_dir / "graphify-out"
@@ -615,7 +615,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
         self.engine.execute(plan, dry_run=False)
 
         # No temp files should remain
@@ -629,7 +629,7 @@ class TestOrganizationEngine:
         (graphify_out / "graph.json").write_text('{"nodes": []}')
 
         report = self.discovery.scan()
-        plan = self.engine.plan(report, interactive=False)
+        plan = self.engine.plan(report)
         success, messages = self.engine.execute(plan, dry_run=False)
 
         assert isinstance(messages, list)

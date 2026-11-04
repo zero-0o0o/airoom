@@ -11,8 +11,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from ruamel.yaml import YAML
+
 from airoom.core.project import Project
-from airoom.core.registry import RegistryManager, _yaml
+from airoom.core.registry import RegistryManager
+
+
+def _yaml() -> YAML:
+    """Return a configured YAML instance for registry I/O."""
+    yaml = YAML()
+    yaml.preserve_quotes = True
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    return yaml
 
 
 @dataclass
@@ -146,21 +156,20 @@ class DiscoveryEngine:
         inspected_locations = self._get_inspected_locations()
         registered_artifacts = self._check_registered_artifacts()
         unregistered_candidates = self._find_candidates()
-        discrepancies: list[RegistryDiscrepancy] = []
-        self._check_registry_discrepancies(
-            registered_artifacts, unregistered_candidates, discrepancies
-        )
-        recommendations = self._generate_recommendations(
-            unregistered_candidates, discrepancies
-        )
-
-        return DiscoveryReport(
+        report = DiscoveryReport(
             inspected_locations=inspected_locations,
             registered_artifacts=registered_artifacts,
             unregistered_candidates=unregistered_candidates,
-            discrepancies=discrepancies,
-            recommendations=recommendations,
+            discrepancies=[],
+            recommendations=[],
         )
+        self._check_registry_discrepancies(
+            report, registered_artifacts, unregistered_candidates
+        )
+        report.recommendations = self._generate_recommendations(
+            unregistered_candidates, report.discrepancies
+        )
+        return report
 
     def _get_inspected_locations(self) -> list[str]:
         """Get list of locations that were inspected."""
@@ -202,52 +211,58 @@ class DiscoveryEngine:
         """
         candidates = []
 
-        # Check project root for known patterns
-        for entry in self.project.root.iterdir():
-            # Skip ignored directories
-            if entry.name in self.IGNORE_PATTERNS:
+        # Known locations to scan (root + known subdirectories, max depth 2)
+        scan_roots = [
+            self.project.root,
+            self.project.root / "docs",
+            self.project.root / ".github",
+        ]
+
+        for scan_root in scan_roots:
+            if not scan_root.exists() or not scan_root.is_dir():
                 continue
-            if entry.is_symlink():
-                # Treat symlinks as opaque - report but don't follow
-                continue
+            # Use rglob with depth limit to avoid deep recursion
+            for entry in self._rglob_depth(scan_root, max_depth=2):
+                # Skip ignored directories (check parent directories too)
+                if self._is_ignored(entry):
+                    continue
+                if entry.is_symlink():
+                    # Treat symlinks as opaque - report but don't follow
+                    continue
 
-            # Check Graphify patterns
-            for pattern, expected_type in self.GRAPHIFY_PATTERNS:
-                if self._matches_pattern(entry.name, pattern):
-                    if self._type_matches(entry, expected_type):
-                        candidates.append(self._create_candidate(
-                            entry, "Graphify", [f"Matches Graphify pattern: {pattern}"],
-                            expected_type
-                        ))
+                # Get relative path from project root for path-based pattern matching
+                try:
+                    rel_path = entry.relative_to(self.project.root).as_posix()
+                except ValueError:
+                    # Entry is not under project root (shouldn't happen)
+                    continue
 
-            # Check Superpowers patterns
-            for pattern, expected_type in self.SUPERPOWERS_PATTERNS:
-                if self._matches_pattern(entry.name, pattern):
-                    if self._type_matches(entry, expected_type):
-                        candidates.append(self._create_candidate(
-                            entry, "Superpowers", [f"Matches Superpowers pattern: {pattern}"],
-                            expected_type
-                        ))
+                # Check Graphify patterns
+                for pattern, expected_type in self.GRAPHIFY_PATTERNS:
+                    if self._matches_pattern(entry.name, rel_path, pattern):
+                        if self._type_matches(entry, expected_type):
+                            candidates.append(self._create_candidate(
+                                entry, "Graphify", [f"Matches Graphify pattern: {pattern}"],
+                                expected_type
+                            ))
 
-            # Check scratchpad patterns
-            for pattern, expected_type, owner in self.SCRATCHPAD_PATTERNS:
-                if self._matches_pattern(entry.name, pattern):
-                    if self._type_matches(entry, expected_type):
-                        candidates.append(self._create_candidate(
-                            entry, owner, [f"Matches {owner} pattern: {pattern}"],
-                            expected_type
-                        ))
+                # Check Superpowers patterns
+                for pattern, expected_type in self.SUPERPOWERS_PATTERNS:
+                    if self._matches_pattern(entry.name, rel_path, pattern):
+                        if self._type_matches(entry, expected_type):
+                            candidates.append(self._create_candidate(
+                                entry, "Superpowers", [f"Matches Superpowers pattern: {pattern}"],
+                                expected_type
+                            ))
 
-        # Check docs/ directory for Superpowers
-        docs_dir = self.project.root / "docs"
-        if docs_dir.exists() and docs_dir.is_dir():
-            superpowers_dir = docs_dir / "superpowers"
-            if superpowers_dir.exists() and not superpowers_dir.is_symlink():
-                candidates.append(self._create_candidate(
-                    superpowers_dir, "Superpowers",
-                    ["Found at docs/superpowers"],
-                    "directory"
-                ))
+                # Check scratchpad patterns
+                for pattern, expected_type, owner in self.SCRATCHPAD_PATTERNS:
+                    if self._matches_pattern(entry.name, rel_path, pattern):
+                        if self._type_matches(entry, expected_type):
+                            candidates.append(self._create_candidate(
+                                entry, owner, [f"Matches {owner} pattern: {pattern}"],
+                                expected_type
+                            ))
 
         # Filter out candidates that are already registered
         registered_paths = self._get_registered_paths()
@@ -255,8 +270,39 @@ class DiscoveryEngine:
 
         return candidates
 
-    def _matches_pattern(self, name: str, pattern: str) -> bool:
-        """Check if a name matches a pattern (exact or prefix)."""
+    def _rglob_depth(self, root: Path, max_depth: int):
+        """Yield files/dirs under root up to max_depth (0=root only, 1=immediate children, etc.)."""
+        if max_depth < 0:
+            return
+        yield root
+        if max_depth == 0:
+            return
+        try:
+            for entry in root.iterdir():
+                if entry.is_dir() and not entry.is_symlink():
+                    yield from self._rglob_depth(entry, max_depth - 1)
+                else:
+                    yield entry
+        except (PermissionError, OSError):
+            pass
+
+    def _is_ignored(self, path: Path) -> bool:
+        """Check if path or any parent is in IGNORE_PATTERNS."""
+        for part in path.parts:
+            if part in self.IGNORE_PATTERNS:
+                return True
+        return False
+
+    def _matches_pattern(self, name: str, rel_path: str, pattern: str) -> bool:
+        """Check if a name or relative path matches a pattern (exact or prefix)."""
+        # If pattern contains path separator, match against relative path
+        if "/" in pattern:
+            if pattern.endswith("_"):
+                return rel_path.startswith(pattern)
+            if pattern.endswith("."):
+                return rel_path.startswith(pattern)
+            return rel_path == pattern
+        # Otherwise match against name only
         if pattern.endswith("_"):
             return name.startswith(pattern)
         if pattern.endswith("."):
@@ -278,8 +324,7 @@ class DiscoveryEngine:
     ) -> DiscoveredArtifact:
         """Create a DiscoveredArtifact from a discovered path."""
         rel_path = path.relative_to(self.project.root).as_posix()
-        feasibility = self._evaluate_relocation_feasibility(owner, path)
-        recommended_mode = "managed" if "Supported" in feasibility else "external"
+        feasibility, recommended_mode = self._evaluate_relocation_feasibility(owner, path)
 
         return DiscoveredArtifact(
             path=rel_path,
@@ -290,27 +335,31 @@ class DiscoveryEngine:
             relocation_feasibility=feasibility,
         )
 
-    def _evaluate_relocation_feasibility(self, owner: str, path: Path) -> str:
-        """Evaluate if an artifact can be relocated under airoom/artifacts/."""
+    def _evaluate_relocation_feasibility(self, owner: str, path: Path) -> tuple[str, Literal["managed", "external"]]:
+        """Evaluate if an artifact can be relocated under airoom/artifacts/.
+
+        Returns:
+            Tuple of (feasibility_description, recommended_mode).
+        """
         if owner == "Graphify":
             # Graphify supports GRAPHIFY_OUT environment variable
-            return "Supported via GRAPHIFY_OUT environment variable"
+            return ("Supported via GRAPHIFY_OUT environment variable", "managed")
         elif owner == "Superpowers":
             # Superpowers can be configured via skills/project config
-            return "Supported via skill configuration or project settings"
+            return ("Supported via skill configuration or project settings", "managed")
         elif owner == "Claude":
             # .claude directory is managed by Claude Code, not easily relocatable
-            return "Hardcoded path (.claude), not relocatable"
+            return ("Hardcoded path (.claude), not relocatable", "external")
         elif owner == "Aider":
             # Aider uses .aider in project root
-            return "Hardcoded path (.aider), not relocatable"
+            return ("Hardcoded path (.aider), not relocatable", "external")
         elif owner == "Cursor":
             # Cursor uses .cursor in project root
-            return "Hardcoded path (.cursor), not relocatable"
+            return ("Hardcoded path (.cursor), not relocatable", "external")
         elif owner in ("Brainstorm", "LLM Plans", "LLM Specs", "AI Plans", "AI Specs"):
             # Standalone documents/specs can be moved
-            return "Standalone document/spec, can be relocated safely"
-        return "Unknown tool, feasibility uncertain"
+            return ("Standalone document/spec, can be relocated safely", "managed")
+        return ("Unknown tool, feasibility uncertain", "external")
 
     def _get_registered_paths(self) -> set[str]:
         """Get set of all registered artifact paths."""
@@ -322,11 +371,11 @@ class DiscoveryEngine:
 
     def _check_registry_discrepancies(
         self,
+        report: DiscoveryReport,
         registered_artifacts: list[tuple[str, bool]],
-        unregistered_candidates: list[DiscoveredArtifact],
-        discrepancies: list[RegistryDiscrepancy]
+        unregistered_candidates: list[DiscoveredArtifact]
     ) -> None:
-        """Check for registry discrepancies and add to discrepancies list."""
+        """Check for registry discrepancies and add to report.discrepancies."""
         data = self._read_raw_registry()
         artifacts = data.get("artifacts", {})
 
@@ -335,7 +384,7 @@ class DiscoveryEngine:
             if not exists:
                 entry = artifacts.get(artifact_id, {})
                 path = entry.get("path", "unknown")
-                discrepancies.append(RegistryDiscrepancy(
+                report.discrepancies.append(RegistryDiscrepancy(
                     kind="missing_path",
                     details=f"Registered artifact '{artifact_id}' path does not exist: {path}"
                 ))
@@ -348,7 +397,7 @@ class DiscoveryEngine:
                 expected_type = entry.get("type", "unknown")
                 actual_type = "directory" if path.is_dir() else "file" if path.is_file() else "unknown"
                 if actual_type != expected_type:
-                    discrepancies.append(RegistryDiscrepancy(
+                    report.discrepancies.append(RegistryDiscrepancy(
                         kind="type_mismatch",
                         details=f"Artifact '{artifact_id}' declared as {expected_type} but is {actual_type} on disk: {entry.get('path', 'unknown')}"
                     ))
@@ -358,7 +407,7 @@ class DiscoveryEngine:
             if entry.get("management") == "managed":
                 path = entry.get("path", "")
                 if not path.startswith("airoom/artifacts/"):
-                    discrepancies.append(RegistryDiscrepancy(
+                    report.discrepancies.append(RegistryDiscrepancy(
                         kind="placement_mismatch",
                         details=f"Managed artifact '{artifact_id}' path is not under airoom/artifacts/: {path}"
                     ))
@@ -373,18 +422,13 @@ class DiscoveryEngine:
 
         for path, ids in path_to_ids.items():
             if len(ids) > 1:
-                discrepancies.append(RegistryDiscrepancy(
+                report.discrepancies.append(RegistryDiscrepancy(
                     kind="duplicate_claim",
                     details=f"Multiple artifacts claim the same path '{path}': {', '.join(ids)}"
                 ))
 
-        # Check for unregistered candidates (already in unregistered_candidates list)
-        # This is informational - the candidates themselves represent this
-        for candidate in unregistered_candidates:
-            discrepancies.append(RegistryDiscrepancy(
-                kind="unregistered_candidate",
-                details=f"Unregistered {candidate.likely_owner} artifact at {candidate.path}"
-            ))
+        # Note: unregistered candidates are already in report.unregistered_candidates,
+        # so we don't add redundant "unregistered_candidate" discrepancies.
 
     def _generate_recommendations(
         self,

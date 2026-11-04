@@ -18,7 +18,7 @@ from airoom.core.registry import (
 
 
 def atomic_write(
-    path,
+    path: Path,
     content: str,
     *,
     expected_text: str | None = None,
@@ -45,3 +45,4 @@ __all__ = [
     "atomic_write",
     "dump_registry",
 ]
+

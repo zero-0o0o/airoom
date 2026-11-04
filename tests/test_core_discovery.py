@@ -222,8 +222,13 @@ class TestDiscoveryEngine:
         report = self.engine.scan()
         
         candidates = report.unregistered_candidates
-        # Could be categorized under a generic owner or specific tool
-        assert len(candidates) >= 1
+        brainstorm_candidates = [c for c in candidates if c.likely_owner == "Brainstorm"]
+        assert len(brainstorm_candidates) == 1
+        candidate = brainstorm_candidates[0]
+        assert candidate.path == "brainstorm.log"
+        assert candidate.type == "file"
+        assert any("Brainstorm pattern" in e for e in candidate.evidence)
+        assert candidate.recommended_mode == "managed"
 
     def test_scan_detects_llm_plan_spec_folders(self):
         """Test detection of LLM plan/spec folders."""
@@ -234,7 +239,13 @@ class TestDiscoveryEngine:
         report = self.engine.scan()
         
         candidates = report.unregistered_candidates
-        assert len(candidates) >= 1
+        plan_candidates = [c for c in candidates if c.likely_owner == "LLM Plans"]
+        assert len(plan_candidates) == 1
+        candidate = plan_candidates[0]
+        assert candidate.path == "llm-plans"
+        assert candidate.type == "directory"
+        assert any("LLM Plans pattern" in e for e in candidate.evidence)
+        assert candidate.recommended_mode == "managed"
 
     def test_scan_ignores_project_source_code(self):
         """Test that project source code is not flagged as AI artifact."""
@@ -389,12 +400,12 @@ class TestDiscoveryEngine:
 
     def test_scan_treats_symlinks_as_opaque(self):
         """Test that symlinks are not followed and reported as-is."""
-        # Create a real directory outside project
-        outside_dir = Path("/tmp") / f"airoom-test-outside-{id(self)}"
-        outside_dir.mkdir(exist_ok=True)
+        # Create a real directory inside project tmpdir (hermetic)
+        outside_dir = self.project_root / "outside-target"
+        outside_dir.mkdir()
         (outside_dir / "target.txt").write_text("target")
         
-        # Create symlink inside project
+        # Create symlink inside project pointing to the outside-target directory
         link_path = self.project_root / "symlink-to-outside"
         link_path.symlink_to(outside_dir, target_is_directory=True)
         

@@ -599,8 +599,17 @@ class TestCliIntegration:
 
         result = subprocess.run(["airoom", "update", "--help"], capture_output=True, text=True)
         assert result.returncode == 0
-        assert "path" in result.stdout  # Check for path argument in help
-        assert "usage:" in result.stdout
+        assert "Update project resources" in result.stdout
+        assert "usage:" in result.stdout.lower()
+
+    def test_cli_global_path_option(self):
+        """Test that global --path option is available."""
+        import subprocess
+
+        result = subprocess.run(["airoom", "--help"], capture_output=True, text=True)
+        assert result.returncode == 0
+        assert "--path" in result.stdout
+        assert "-p" in result.stdout
 
 
 if __name__ == "__main__":

@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import os
 import tempfile
-from pathlib import Path
+from io import StringIO
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from ruamel.yaml import YAML
@@ -46,9 +47,7 @@ def _relative_path(value: Any, field: str) -> str:
     """
     if not isinstance(value, str) or not value.strip():
         raise RegistryError(f"{field} must be a non-empty project-relative path")
-    path = Path(value)
     # Use PurePosixPath for consistent cross-platform validation
-    from pathlib import PurePosixPath
     posix_path = PurePosixPath(value)
     if posix_path.is_absolute() or ".." in posix_path.parts or "\\" in value:
         raise RegistryError(f"{field} must not be absolute or contain '..': {value!r}")
@@ -156,7 +155,6 @@ def dump_registry(data: Any) -> str:
         RegistryError: If the data fails validation.
     """
     validate_registry(data)
-    from io import StringIO
 
     output = StringIO()
     _yaml().dump(data, output)
@@ -206,9 +204,13 @@ class RegistryManager:
         # Validate first
         validate_registry(data)
         content = dump_registry(data)
-        # Use atomic_write from core
+        # Read current content for concurrent modification detection
+        expected_text = None
+        if self.registry_path.exists():
+            expected_text = self.registry_path.read_text(encoding="utf-8")
+        # Use atomic_write from core with expected_text for concurrency detection
         try:
-            atomic_write(self.registry_path, content)
+            atomic_write(self.registry_path, content, expected_text=expected_text)
         except AtomicWriteError as exc:
             raise RegistryError(str(exc)) from exc
 
@@ -293,3 +295,4 @@ class RegistryManager:
             raise RegistryError(f"tool {tool_id!r} not found")
         del data["tools"][tool_id]
         self.write(data)
+

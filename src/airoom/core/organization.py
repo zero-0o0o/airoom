@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any, Literal
 
 from airoom.core.atomic import atomic_write
-from airoom.core.baseline import BaselineManager
 from airoom.core.discovery import DiscoveryReport, DiscoveredArtifact
 from airoom.core.project import Project
 from airoom.core.registry import RegistryManager
@@ -122,31 +121,33 @@ class OrganizationEngine:
         self,
         project: Project,
         registry: RegistryManager,
-        baseline: BaselineManager,
     ) -> None:
         """Initialize the OrganizationEngine.
 
         Args:
             project: The AIroom project.
             registry: The registry manager.
-            baseline: The baseline manager.
         """
         self.project = project
         self.registry = registry
-        self.baseline = baseline
 
-    def plan(self, discovery_report: DiscoveryReport, interactive: bool = False) -> RelocationPlan:
+    def plan(self, discovery_report: DiscoveryReport) -> RelocationPlan:
         """Generate a relocation plan from a discovery report.
 
         Args:
             discovery_report: Report from DiscoveryEngine.scan().
-            interactive: If True, would prompt for each action (not yet implemented).
 
         Returns:
             RelocationPlan with actions and tool configurations.
         """
         actions: list[RelocationAction] = []
         tool_configs: dict[str, dict] = {}
+        used_artifact_ids: set[str] = set()
+
+        # Read existing artifact IDs from registry to avoid collisions
+        registry_data = self.registry.read()
+        for existing_id in registry_data.get("artifacts", {}).keys():
+            used_artifact_ids.add(existing_id)
 
         for candidate in discovery_report.unregistered_candidates:
             tool_config = self.TOOL_CONFIGS.get(candidate.likely_owner, {})
@@ -154,8 +155,9 @@ class OrganizationEngine:
             canonical_path = tool_config.get("canonical_path")
             env_var = tool_config.get("env_var")
 
-            # Determine artifact_id from path (sanitized)
-            artifact_id = self._sanitize_artifact_id(candidate.path)
+            # Determine artifact_id from path (sanitized), avoiding collisions
+            artifact_id = self._sanitize_artifact_id(candidate.path, used_artifact_ids)
+            used_artifact_ids.add(artifact_id)
 
             if management == "managed" and canonical_path:
                 # For managed artifacts, target is under airoom/artifacts/
@@ -255,15 +257,6 @@ class OrganizationEngine:
                     f"✓ Registered {action.source.relative_to(self.project.root)} as external"
                 )
 
-            # Update tool configuration in registry
-            tool_config = plan.tool_configs.get(action.tool_id)
-            if tool_config:
-                self._update_tool_config(action.tool_id, tool_config)
-
-            # Register artifact in registry
-            self._register_artifact(action)
-            messages.append(f"✓ Registered artifact '{action.artifact_id}' in registry")
-
             # Post-verification with rollback
             ok = self._verify_and_rollback(action)
             if not ok:
@@ -271,6 +264,15 @@ class OrganizationEngine:
                 overall_success = False
                 continue
             messages.append(f"✓ Verified {action.artifact_id}")
+
+            # Update tool configuration in registry (only after successful verification)
+            tool_config = plan.tool_configs.get(action.tool_id)
+            if tool_config:
+                self._update_tool_config(action.tool_id, tool_config)
+
+            # Register artifact in registry (only after successful verification)
+            self._register_artifact(action)
+            messages.append(f"✓ Registered artifact '{action.artifact_id}' in registry")
 
         # Update .gitignore if needed (only in real execution)
         if not dry_run:
@@ -427,24 +429,20 @@ class OrganizationEngine:
         data = self.registry.read()
         tools = data.setdefault("tools", {})
 
+        tool_config = {
+            "name": tool_id,
+            "status": "active",
+            "config_path": config.get("output_path"),
+        }
+        if config.get("output_env"):
+            tool_config["config"] = {"output_env": config["output_env"]}
+
         if tool_id in tools:
-            # Update existing
-            tools[tool_id].update({
-                "name": tool_id,
-                "status": "active",
-                "config_path": config.get("output_path"),
-            })
-            if config.get("output_env"):
-                tools[tool_id]["output_env"] = config["output_env"]
+            # Update existing, preserving any other fields
+            tools[tool_id].update(tool_config)
         else:
             # Add new
-            tools[tool_id] = {
-                "name": tool_id,
-                "status": "active",
-                "config_path": config.get("output_path"),
-            }
-            if config.get("output_env"):
-                tools[tool_id]["output_env"] = config["output_env"]
+            tools[tool_id] = tool_config
 
         self.registry.write(data)
 
@@ -538,14 +536,13 @@ class OrganizationEngine:
         if not entries_to_add:
             return
 
-        # Read existing .gitignore
+        # Read existing .gitignore once
+        content = gitignore_path.read_text(encoding="utf-8") if gitignore_path.exists() else ""
         existing_entries = set()
-        if gitignore_path.exists():
-            content = gitignore_path.read_text(encoding="utf-8")
-            for line in content.splitlines():
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    existing_entries.add(line)
+        for line in content.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                existing_entries.add(line)
 
         # Add new entries
         new_entries = entries_to_add - existing_entries
@@ -553,9 +550,7 @@ class OrganizationEngine:
             return
 
         # Write updated .gitignore
-        lines = []
-        if gitignore_path.exists():
-            lines = content.splitlines()
+        lines = content.splitlines()
 
         # Ensure blank line before new entries
         if lines and lines[-1].strip():
@@ -568,11 +563,12 @@ class OrganizationEngine:
         content = "\n".join(lines) + "\n"
         atomic_write(gitignore_path, content)
 
-    def _sanitize_artifact_id(self, path: str) -> str:
-        """Sanitize a path into a valid artifact ID.
+    def _sanitize_artifact_id(self, path: str, existing_ids: set[str] | None = None) -> str:
+        """Sanitize a path into a valid artifact ID, avoiding collisions.
 
         Args:
             path: Relative path.
+            existing_ids: Set of existing artifact IDs to avoid collisions.
 
         Returns:
             Sanitized artifact ID.
@@ -587,14 +583,23 @@ class OrganizationEngine:
         # Ensure it's not empty
         if not artifact_id:
             artifact_id = "artifact"
+
+        # Disambiguate if collision with existing IDs
+        if existing_ids is not None:
+            original_id = artifact_id
+            counter = 1
+            while artifact_id in existing_ids:
+                artifact_id = f"{original_id}-{counter}"
+                counter += 1
+
         return artifact_id
 
     def _get_unique_target(self, base_target: Path, artifact_id: str) -> Path:
-        """Get a unique target path, appending suffix if needed.
+        """Get a unique target path, appending numeric suffix if needed.
 
         Args:
             base_target: Base target path.
-            artifact_id: Artifact identifier for suffix.
+            artifact_id: Artifact identifier (unused, kept for compatibility).
 
         Returns:
             Unique target path.
@@ -602,15 +607,12 @@ class OrganizationEngine:
         if not base_target.exists():
             return base_target
 
-        # If base exists, try with artifact_id suffix
         parent = base_target.parent
         name = base_target.name
-        suffix = f"-{artifact_id}"
-        candidate = parent / f"{name}{suffix}"
-
         counter = 1
+        candidate = parent / f"{name}-{counter}"
         while candidate.exists():
-            candidate = parent / f"{name}{suffix}-{counter}"
             counter += 1
+            candidate = parent / f"{name}-{counter}"
 
         return candidate
