@@ -12,6 +12,7 @@ from airoom.commands.init import init_command
 from airoom.commands.update import update_command
 from airoom.commands.upgrade import upgrade_command
 from airoom.commands.uninstall import uninstall_command
+from airoom.commands_typer.status import status
 
 console = Console()
 
@@ -185,6 +186,9 @@ def _legacy_uninstall(
     args = _create_args_namespace(yes=yes)
     return uninstall_command(args)
 
+
+# Register Typer commands
+app.command("status", help="Show project health summary")(status)
 
 # Register legacy commands at top level (for backward compatibility)
 app.command("init", help="Initialize AIroom in a project")(_legacy_init)
