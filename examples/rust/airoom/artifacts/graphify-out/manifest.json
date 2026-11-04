@@ -1,0 +1,44 @@
+{
+  ".agents/skills/superpowers/scripts/sdd-workspace": {
+    "mtime": 1793731521.193053,
+    "seen": 1793731534.168143,
+    "ast_hash": "4f9ab0214ed85cbba226472f25c6dfc2",
+    "semantic_hash": "4f9ab0214ed85cbba226472f25c6dfc2"
+  },
+  "Cargo.toml": {
+    "mtime": 1793731443.71436,
+    "seen": 1793731534.168144,
+    "ast_hash": "a8c523f7a4511003f0ca38e2ca40ac24",
+    "semantic_hash": "a8c523f7a4511003f0ca38e2ca40ac24"
+  },
+  "airoom/.airoom-baseline.json": {
+    "mtime": 1793730920.528459,
+    "seen": 1793731534.168145,
+    "ast_hash": "61771b91b59a30de6f3580cd5f01c92d",
+    "semantic_hash": "61771b91b59a30de6f3580cd5f01c92d"
+  },
+  "src/lib.rs": {
+    "mtime": 1793731457.095809,
+    "seen": 1793731534.168146,
+    "ast_hash": "90d2ac4b288349b25f64ed1a0730211c",
+    "semantic_hash": "90d2ac4b288349b25f64ed1a0730211c"
+  },
+  "src/main.rs": {
+    "mtime": 1793731482.456411,
+    "seen": 1793731534.1681468,
+    "ast_hash": "d3e5261d7c3823808143e568b4818b6a",
+    "semantic_hash": "d3e5261d7c3823808143e568b4818b6a"
+  },
+  "tests/test_airoom.rs": {
+    "mtime": 1793731501.2204962,
+    "seen": 1793731534.168148,
+    "ast_hash": "988160ba30fb05a8f247e31a9057d985",
+    "semantic_hash": "988160ba30fb05a8f247e31a9057d985"
+  },
+  "tests/test_counter.rs": {
+    "mtime": 1793731490.7132185,
+    "seen": 1793731534.168148,
+    "ast_hash": "d77c88e0a010fdb5b55099cbd666ea51",
+    "semantic_hash": "d77c88e0a010fdb5b55099cbd666ea51"
+  }
+}

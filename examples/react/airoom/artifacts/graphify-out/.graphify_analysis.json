@@ -1,0 +1,177 @@
+{
+  "communities": {
+    "0": [
+      "package",
+      "package_author",
+      "package_description",
+      "package_keywords",
+      "package_license",
+      "package_main",
+      "package_name",
+      "package_scripts",
+      "package_scripts_start",
+      "package_scripts_test",
+      "package_version"
+    ],
+    "1": [
+      "ref_fs",
+      "ref_http",
+      "ref_path",
+      "src_server",
+      "src_server_fs",
+      "src_server_http",
+      "src_server_parsesimpleyaml",
+      "src_server_path",
+      "src_server_project_root",
+      "src_server_public_dir",
+      "src_server_server"
+    ],
+    "2": [
+      "src_app",
+      "src_app_counter",
+      "src_app_createairoomui",
+      "src_app_createcounterapp",
+      "src_app_initializeapp",
+      "src_app_initializeapp_renderall",
+      "src_components_airoomui",
+      "src_components_airoomui_createairoomui",
+      "src_components_counterapp",
+      "src_components_counterapp_createcounterapp",
+      "src_counter"
+    ],
+    "3": [
+      "ref_node_fs",
+      "ref_node_path",
+      "tests_airoom_artifacts_test",
+      "tests_airoom_artifacts_test_artifacts_dir",
+      "tests_airoom_artifacts_test_assert",
+      "tests_airoom_artifacts_test_fs",
+      "tests_airoom_artifacts_test_path",
+      "tests_airoom_artifacts_test_project_root",
+      "tests_airoom_artifacts_test_test"
+    ],
+    "4": [
+      "src_counter_counter",
+      "src_counter_counter_constructor",
+      "src_counter_counter_decrement",
+      "src_counter_counter_gethistory",
+      "src_counter_counter_getstep",
+      "src_counter_counter_getvalue",
+      "src_counter_counter_increment",
+      "src_counter_counter_reset",
+      "src_counter_counter_setstep"
+    ],
+    "5": [
+      "ref_node_assert",
+      "ref_node_test",
+      "tests_counter_test",
+      "tests_counter_test_assert",
+      "tests_counter_test_counter",
+      "tests_counter_test_test"
+    ],
+    "6": [
+      "agents_skills_superpowers_scripts_sdd_workspace",
+      "agents_skills_superpowers_scripts_sdd_workspace__entry"
+    ]
+  },
+  "cohesion": {
+    "0": 0.18181818181818182,
+    "1": 0.2,
+    "2": 0.2545454545454545,
+    "3": 0.2222222222222222,
+    "4": 0.2222222222222222,
+    "5": 0.3333333333333333,
+    "6": 1.0
+  },
+  "gods": [
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 3
+    },
+    {
+      "id": "src_app_initializeapp",
+      "label": "initializeApp()",
+      "degree": 3
+    },
+    {
+      "id": "src_app_initializeapp_renderall",
+      "label": "renderAll()",
+      "degree": 3
+    },
+    {
+      "id": "src_components_airoomui_createairoomui",
+      "label": "createAiroomUI()",
+      "degree": 3
+    },
+    {
+      "id": "src_components_counterapp_createcounterapp",
+      "label": "createCounterApp()",
+      "degree": 3
+    },
+    {
+      "id": "src_server_parsesimpleyaml",
+      "label": "parseSimpleYaml()",
+      "degree": 2
+    },
+    {
+      "id": "src_server_server",
+      "label": "server",
+      "degree": 2
+    },
+    {
+      "id": "package_main",
+      "label": "main",
+      "degree": 1
+    },
+    {
+      "id": "package_scripts_test",
+      "label": "test",
+      "degree": 1
+    },
+    {
+      "id": "package_keywords",
+      "label": "keywords",
+      "degree": 1
+    }
+  ],
+  "surprises": [
+    {
+      "source": "initializeApp()",
+      "target": "Counter",
+      "source_files": [
+        "src/app.js",
+        "src/counter.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "renderAll()",
+      "target": "createAiroomUI()",
+      "source_files": [
+        "src/app.js",
+        "src/components/AiroomUI.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "renderAll()",
+      "target": "createCounterApp()",
+      "source_files": [
+        "src/app.js",
+        "src/components/CounterApp.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

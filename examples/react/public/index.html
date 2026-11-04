@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Counter App + AIroom UI</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131c2e;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --success: #34d399;
+      --accent: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem;
+    }
+    .app-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      gap: 2rem;
+    }
+    header {
+      text-align: center;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 2.25rem; color: #fff; margin-bottom: 0.5rem; }
+    header p { color: var(--muted); }
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 2rem;
+    }
+    @media (max-width: 850px) {
+      .layout-grid { grid-template-columns: 1fr; }
+    }
+    .counter-card, .airoom-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.75rem;
+    }
+    .counter-value {
+      font-size: 4.5rem;
+      font-weight: 800;
+      text-align: center;
+      color: var(--primary);
+      margin: 1.5rem 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .step-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .step-control input {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      width: 70px;
+      text-align: center;
+    }
+    .button-row {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+    button.btn {
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: var(--primary); color: #0f172a; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #334155; color: #fff; }
+    .btn-secondary:hover { background: #475569; }
+    .history-section {
+      margin-top: 1.75rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+    .history-section h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--muted); }
+    .history-list { list-style: none; display: grid; gap: 0.4rem; font-size: 0.85rem; }
+    .history-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0.6rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+    .header-with-badge {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .desc { font-size: 0.9rem; color: var(--muted); margin-bottom: 1.25rem; }
+    .section-block { margin-bottom: 1.5rem; }
+    .section-block h3 { font-size: 1rem; color: #cbd5e1; margin-bottom: 0.75rem; }
+    .artifacts-grid { display: grid; gap: 0.75rem; }
+    .artifact-card {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+    }
+    .art-title { font-size: 0.95rem; margin-bottom: 0.25rem; color: #fff; }
+    .art-path code { color: #38bdf8; font-size: 0.85rem; }
+    .art-meta { display: flex; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.75rem; }
+    .mode-badge.managed {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+    }
+    .type-tag, .owner-tag {
+      background: #1e293b;
+      color: var(--muted);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+    }
+    .tools-list { display: grid; gap: 0.5rem; }
+    .tool-item {
+      display: flex;
+      justify-content: space-between;
+      background: #090e1a;
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .boundary-callout {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      background: rgba(168, 85, 247, 0.1);
+      border-left: 3px solid var(--accent);
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      border-radius: 0 6px 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>React Counter App + AIroom UI</h1>
+      <p>Demonstrating AI artifact organization inside <code>airoom/artifacts/</code> for web applications</p>
+    </header>
+
+    <div class="layout-grid">
+      <div id="counterRoot"></div>
+      <div id="airoomRoot"></div>
+    </div>
+  </div>
+
+  <script src="/app.bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+{
+  "communities": {
+    "0": [
+      "default",
+      "src_lib_counter",
+      "src_lib_counter_decrement",
+      "src_lib_counter_history",
+      "src_lib_counter_reset",
+      "src_lib_counter_value",
+      "tests_test_counter",
+      "tests_test_counter_test_counter_integration_sequence",
+      "vec"
+    ],
+    "1": [
+      "fs",
+      "io",
+      "net",
+      "src_main",
+      "src_main_html_page",
+      "sync"
+    ],
+    "2": [
+      "arc",
+      "mutex",
+      "src_main_handle_client",
+      "src_main_main",
+      "tcpstream"
+    ],
+    "3": [
+      "path",
+      "tests_test_airoom",
+      "tests_test_airoom_test_airoom_artifacts_live_under_canonical_directory",
+      "tests_test_airoom_test_registry_records_managed_artifacts",
+      "tests_test_airoom_test_unorganized_tool_defaults_absent_from_project_root"
+    ],
+    "4": [
+      "src_lib_counter_increment",
+      "src_lib_counter_new",
+      "src_lib_test_increment_and_decrement",
+      "src_lib_test_reset"
+    ],
+    "5": [
+      "self",
+      "src_lib_counter_with_initial",
+      "src_lib_test_counter_with_initial"
+    ],
+    "6": [
+      "agents_skills_superpowers_scripts_sdd_workspace",
+      "agents_skills_superpowers_scripts_sdd_workspace__entry"
+    ],
+    "7": [
+      "src_lib",
+      "super"
+    ],
+    "8": [
+      "src_lib_counter_default",
+      "src_lib_test_counter_defaults"
+    ],
+    "9": [
+      "pkg_airoom_rust_counter"
+    ]
+  },
+  "cohesion": {
+    "0": 0.2222222222222222,
+    "1": 0.3333333333333333,
+    "2": 0.4,
+    "3": 0.4,
+    "4": 0.5,
+    "5": 0.6666666666666666,
+    "6": 1.0,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_main_handle_client",
+      "label": "handle_client()",
+      "degree": 7
+    },
+    {
+      "id": "src_lib_test_reset",
+      "label": "test_reset()",
+      "degree": 3
+    },
+    {
+      "id": "src_lib_test_counter_defaults",
+      "label": "test_counter_defaults()",
+      "degree": 2
+    },
+    {
+      "id": "src_lib_test_counter_with_initial",
+      "label": "test_counter_with_initial()",
+      "degree": 2
+    },
+    {
+      "id": "src_lib_test_increment_and_decrement",
+      "label": "test_increment_and_decrement()",
+      "degree": 2
+    },
+    {
+      "id": "src_main_main",
+      "label": "main()",
+      "degree": 2
+    },
+    {
+      "id": "src_main_html_page",
+      "label": "HTML_PAGE",
+      "degree": 1
+    },
+    {
+      "id": "pkg_airoom_rust_counter",
+      "label": "airoom-rust-counter",
+      "degree": 0
+    }
+  ],
+  "surprises": [
+    {
+      "source": "handle_client()",
+      "target": "Counter",
+      "source_files": [
+        "src/main.rs",
+        "src/lib.rs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

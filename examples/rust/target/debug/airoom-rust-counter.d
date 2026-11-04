@@ -1,0 +1,1 @@
+/Users/tj/Developments/AIroom-workspace/airoom/examples/rust/target/debug/airoom-rust-counter: /Users/tj/Developments/AIroom-workspace/airoom/examples/rust/src/lib.rs /Users/tj/Developments/AIroom-workspace/airoom/examples/rust/src/main.rs

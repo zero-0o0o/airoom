@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+plan_file="${1:-}"
+if [ -z "$plan_file" ]; then
+    echo "Usage: sdd-workspace <path-to-plan>" >&2
+    exit 1
+fi
+
+# Locate nearest ancestor containing airoom/AIROOM.md
+dir="$PWD"
+root=""
+while [ "$dir" != "/" ]; do
+    if [ -f "$dir/airoom/AIROOM.md" ]; then
+        root="$dir"
+        break
+    fi
+    dir="$(dirname "$dir")"
+done
+
+if [ -z "$root" ]; then
+    root="$PWD"
+fi
+
+plan_basename="$(basename "$plan_file" .md)"
+workspace_dir="$root/airoom/artifacts/.superpowers/sdd/$plan_basename"
+mkdir -p "$workspace_dir"
+echo "$plan_file" > "$workspace_dir/plan-path"
+echo "# SDD Progress for $plan_basename" > "$workspace_dir/progress.md"
+
+echo "Initialized SDD workspace: $workspace_dir"

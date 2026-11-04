@@ -1,0 +1,21 @@
+# AIroom's single project registry. Add only resources that have been verified.
+#
+# Schema Reference:
+#   artifacts.<id>:
+#     owner: <tool-id>              # required: producing tool or agent
+#     path: <project-relative-path> # required: canonical path (must be under airoom/artifacts/ if managed)
+#     type: directory | file        # required: file or directory
+#     management: managed | external# required: managed (in airoom/artifacts) or external (in-place)
+#     status: active | inactive     # required: active or inactive
+#     original_path: <path>         # optional: provenance path prior to relocation
+#
+#   tools.<id>:
+#     name: <Tool Name>             # required: human-readable name
+#     status: active | inactive     # required: active or inactive
+#     output_path: <path>           # optional: configured canonical output path
+#     output_env: <ENV=value>       # optional: environment variable configuration
+#
+version: 1
+
+artifacts: {}
+tools: {}

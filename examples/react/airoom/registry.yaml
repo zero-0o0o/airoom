@@ -1,0 +1,56 @@
+# AIroom's single project registry. Add only resources that have been verified.
+version: 1
+
+artifacts:
+  graphify-output:
+    owner: graphify
+    path: airoom/artifacts/graphify-out
+    type: directory
+    management: managed
+    status: active
+    output_setting: GRAPHIFY_OUT=airoom/artifacts/graphify-out
+  superpowers-specs:
+    owner: superpowers
+    path: airoom/artifacts/docs/superpowers/specs
+    type: directory
+    management: managed
+    status: active
+    version: 7.0.1
+  superpowers-plans:
+    owner: superpowers
+    path: airoom/artifacts/docs/superpowers/plans
+    type: directory
+    management: managed
+    status: active
+    version: 7.0.1
+  superpowers-brainstorm:
+    owner: superpowers
+    path: airoom/artifacts/.superpowers/brainstorm
+    type: directory
+    management: managed
+    status: active
+    session_state: local and ignored
+  superpowers-sdd:
+    owner: superpowers
+    path: airoom/artifacts/.superpowers/sdd
+    type: directory
+    management: managed
+    status: active
+    workspace: plan-scoped scratch
+
+tools:
+  graphify:
+    name: Graphify
+    status: active
+    output_path: airoom/artifacts/graphify-out
+    output_env: GRAPHIFY_OUT=airoom/artifacts/graphify-out
+    project_skill: .agents/skills/graphify/SKILL.md
+    verification: Generated AST and queried node relations directly under airoom/artifacts
+  superpowers:
+    name: Superpowers
+    status: active
+    version: 7.0.1
+    project_skill: .agents/skills/superpowers/SKILL.md
+    output_path: airoom/artifacts/docs/superpowers
+    project_adaptation: Routed specs, plans, brainstorm sessions, and SDD workspaces to airoom/artifacts/
+    verification: Tested spec/plan authoring and SDD workspace script

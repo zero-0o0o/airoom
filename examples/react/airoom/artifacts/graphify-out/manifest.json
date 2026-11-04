@@ -1,0 +1,62 @@
+{
+  ".agents/skills/superpowers/scripts/sdd-workspace": {
+    "mtime": 1793731746.2711165,
+    "seen": 1793731757.812568,
+    "ast_hash": "4f9ab0214ed85cbba226472f25c6dfc2",
+    "semantic_hash": "4f9ab0214ed85cbba226472f25c6dfc2"
+  },
+  "airoom/.airoom-baseline.json": {
+    "mtime": 1793731620.3933039,
+    "seen": 1793731757.81257,
+    "ast_hash": "61771b91b59a30de6f3580cd5f01c92d",
+    "semantic_hash": "61771b91b59a30de6f3580cd5f01c92d"
+  },
+  "package.json": {
+    "mtime": 1793731627.5068042,
+    "seen": 1793731757.8125708,
+    "ast_hash": "f9cb06111bfb6d91b0f506177d9f8252",
+    "semantic_hash": "f9cb06111bfb6d91b0f506177d9f8252"
+  },
+  "src/app.js": {
+    "mtime": 1793731682.5369656,
+    "seen": 1793731757.812572,
+    "ast_hash": "9059c9442394112df238d7b9eb6244bd",
+    "semantic_hash": "9059c9442394112df238d7b9eb6244bd"
+  },
+  "src/components/AiroomUI.js": {
+    "mtime": 1793731656.5877469,
+    "seen": 1793731757.812572,
+    "ast_hash": "fc1392f9e9cfdcab64756d672f0adab0",
+    "semantic_hash": "fc1392f9e9cfdcab64756d672f0adab0"
+  },
+  "src/components/CounterApp.js": {
+    "mtime": 1793731644.264975,
+    "seen": 1793731757.812573,
+    "ast_hash": "81abbe7d970f65ddbbb9749f3f669baf",
+    "semantic_hash": "81abbe7d970f65ddbbb9749f3f669baf"
+  },
+  "src/counter.js": {
+    "mtime": 1793731634.870015,
+    "seen": 1793731757.812574,
+    "ast_hash": "c08b431d7b6e6c22ac1cc97bd112b12c",
+    "semantic_hash": "c08b431d7b6e6c22ac1cc97bd112b12c"
+  },
+  "src/server.js": {
+    "mtime": 1793731698.188697,
+    "seen": 1793731757.8125792,
+    "ast_hash": "42014b94dd87f36f296c7e91f49493d1",
+    "semantic_hash": "42014b94dd87f36f296c7e91f49493d1"
+  },
+  "tests/airoom_artifacts.test.js": {
+    "mtime": 1793731717.9414408,
+    "seen": 1793731757.81258,
+    "ast_hash": "a9e62385b85777953f944ccf511cdf2b",
+    "semantic_hash": "a9e62385b85777953f944ccf511cdf2b"
+  },
+  "tests/counter.test.js": {
+    "mtime": 1793731706.3244684,
+    "seen": 1793731757.81258,
+    "ast_hash": "e09dd23ffe3f7925c3267081d9c2a40a",
+    "semantic_hash": "e09dd23ffe3f7925c3267081d9c2a40a"
+  }
+}
