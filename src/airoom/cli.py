@@ -18,6 +18,7 @@ from airoom.commands_typer.registry import registry_app
 from airoom.commands_typer.discover import discover
 from airoom.commands_typer.organize import organize
 from airoom.commands_typer.config import config_app
+from airoom.commands_typer.completion import completion_app
 
 console = Console()
 
@@ -199,6 +200,7 @@ app.command("discover", help="Discover AI artifacts and registry discrepancies")
 app.command("organize", help="Organize artifacts under airoom/artifacts/")(organize)
 app.add_typer(registry_app, name="registry")
 app.add_typer(config_app, name="config")
+app.add_typer(completion_app, name="completion")
 
 # Register legacy commands at top level (for backward compatibility)
 app.command("init", help="Initialize AIroom in a project")(_legacy_init)
