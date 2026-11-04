@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from airoom import __version__
+from airoom.core.resources import ResourceManager
 from airoom.registry import RegistryError, atomic_write, parse_registry
 
 
@@ -15,33 +16,27 @@ AIROOM_START = "<!-- AIROOM:START -->"
 AIROOM_END = "<!-- AIROOM:END -->"
 
 
+_resource_manager = ResourceManager()
+
+
 def get_resource_path(relative_path: str) -> Path:
-    """Get the path to a packaged resource."""
-    # Resources are in the airoom package directory
-    package_root = Path(__file__).parent.parent
-    return package_root / "resources" / relative_path
+    """Get the path to a packaged resource (delegates to ResourceManager)."""
+    return _resource_manager.get_resource_path(relative_path)
 
 
 def read_resource(relative_path: str) -> str:
-    """Read a packaged resource file."""
-    path = get_resource_path(relative_path)
-    return path.read_text(encoding="utf-8")
+    """Read a packaged resource file (delegates to ResourceManager)."""
+    return _resource_manager.read_resource(relative_path)
 
 
 def list_packaged_skills() -> list[str]:
-    """List all skill names packaged with AIroom."""
-    skills_dir = get_resource_path("skills")
-    if not skills_dir.exists():
-        return []
-    return sorted([d.name for d in skills_dir.iterdir() if d.is_dir()])
+    """List all skill names packaged with AIroom (delegates to ResourceManager)."""
+    return _resource_manager.list_packaged_skills()
 
 
 def list_packaged_templates() -> list[str]:
-    """List all template names packaged with AIroom."""
-    templates_dir = get_resource_path("templates")
-    if not templates_dir.exists():
-        return []
-    return sorted([f.name for f in templates_dir.iterdir() if f.is_file()])
+    """List all template names packaged with AIroom (delegates to ResourceManager)."""
+    return _resource_manager.list_packaged_templates()
 
 
 def find_project_root(start_path: Optional[Path] = None) -> Path:
