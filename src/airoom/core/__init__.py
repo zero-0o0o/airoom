@@ -27,8 +27,6 @@ from airoom.core.atomic import (
 # Registry validation and management
 from airoom.core.registry import (
     RegistryError,
-    _yaml,
-    _relative_path,
     validate_registry,
     parse_registry,
     dump_registry,
@@ -72,8 +70,6 @@ from airoom.core.resources import (
 from airoom.core.config import (
     Config,
     ConfigManager,
-    _default_config,
-    TOP_LEVEL_KEYS,
 )
 
 
@@ -92,8 +88,6 @@ __all__ = [
     "compute_file_hash",
     # Registry
     "RegistryError",
-    "_yaml",
-    "_relative_path",
     "validate_registry",
     "parse_registry",
     "dump_registry",
@@ -119,6 +113,4 @@ __all__ = [
     # Config
     "Config",
     "ConfigManager",
-    "_default_config",
-    "TOP_LEVEL_KEYS",
 ]
