@@ -10,6 +10,8 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
+from airoom.core.version import get_installed_version
+
 
 @dataclass
 class Release:
@@ -19,13 +21,6 @@ class Release:
     version: str  # Semantic version without 'v' prefix
     prerelease: bool
     published_at: str
-
-
-def get_installed_version() -> str:
-    """Get the currently installed AIroom version."""
-    from airoom import __version__
-
-    return __version__
 
 
 def get_pipx_path() -> Optional[str]:

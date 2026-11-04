@@ -16,37 +16,9 @@ from airoom.commands.init import (
     list_packaged_skills as list_packaged_skills,
     list_packaged_templates as list_packaged_templates,
 )
-from airoom.registry import RegistryError, atomic_write, dump_registry, parse_registry
-
-
-def compute_file_hash(file_path: Path) -> str:
-    """Compute SHA256 hash of a file."""
-    if not file_path.exists() or not file_path.is_file():
-        return ""
-    hasher = hashlib.sha256()
-    with file_path.open("rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-
-def read_version_file(version_path: Path) -> str:
-    """Read version from .airoom-version file."""
-    if version_path.exists():
-        return version_path.read_text(encoding="utf-8").strip()
-    return ""
-
-
-def write_version_file(version_path: Path, version: str) -> None:
-    """Write version to .airoom-version file atomically."""
-    content = version + "\n"
-    if version_path.exists():
-        previous = version_path.read_text(encoding="utf-8")
-        if previous == content:
-            return
-        atomic_write(version_path, content, expected_text=previous)
-    else:
-        atomic_write(version_path, content, expected_absent=True)
+from airoom.core.atomic import atomic_write, compute_file_hash
+from airoom.core.version import read_version_file, write_version_file
+from airoom.registry import RegistryError, dump_registry, parse_registry
 
 
 def update_skill(
