@@ -9,7 +9,6 @@ from rich.console import Console
 
 from airoom import __version__
 from airoom.commands.init import init_command
-from airoom.commands.uninstall import uninstall_command
 from airoom.commands_typer.status import status
 from airoom.commands_typer.doctor import doctor
 from airoom.commands_typer.registry import registry_app
@@ -20,6 +19,7 @@ from airoom.commands_typer.completion import completion_app
 from airoom.commands_typer.init import init_app
 from airoom.commands_typer.update import update_app
 from airoom.commands_typer.upgrade import upgrade_app
+from airoom.commands_typer.uninstall import uninstall_app
 from airoom.core.logging import configure_logging
 from airoom.core.types import GlobalOptions
 
@@ -184,19 +184,6 @@ def _legacy_upgrade(
     return upgrade_command(args)
 
 
-def _legacy_uninstall(
-    ctx: typer.Context,
-    yes: Annotated[
-        bool,
-        typer.Option("--yes", "-y", help="Skip confirmation prompt"),
-    ] = False,
-) -> int:
-    """Uninstall the global CLI."""
-    global_opts = ctx.obj if ctx.obj else GlobalOptions()
-    args = _create_args_namespace(yes=yes)
-    return uninstall_command(args)
-
-
 # Register Typer commands
 app.command("status", help="Show project health summary")(status)
 app.command("doctor", help="Diagnose and repair common issues")(doctor)
@@ -208,15 +195,12 @@ app.add_typer(completion_app, name="completion")
 app.add_typer(init_app, name="init")
 app.add_typer(update_app, name="update")
 app.add_typer(upgrade_app, name="upgrade")
-
-# Register legacy commands at top level (for backward compatibility) - hidden from help
-app.command("uninstall", help="Uninstall the global CLI", hidden=True)(_legacy_uninstall)
+app.add_typer(uninstall_app, name="uninstall")
 
 # Register legacy commands under legacy subcommand group (visible in help)
 legacy_app.command("init", help="Initialize AIroom in a project")(_legacy_init)
 legacy_app.command("update", help="Update project resources")(_legacy_update)
 legacy_app.command("upgrade", help="Upgrade the global CLI")(_legacy_upgrade)
-legacy_app.command("uninstall", help="Uninstall the global CLI")(_legacy_uninstall)
 
 # Register legacy app as subcommand group on main app
 app.add_typer(legacy_app, name="legacy")

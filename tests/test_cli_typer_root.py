@@ -74,7 +74,8 @@ class TestTyperApp:
         assert "init" in result.stdout
         assert "update" in result.stdout
         assert "upgrade" in result.stdout
-        assert "uninstall" in result.stdout
+        # uninstall is now a Typer command at top level, not in legacy
+        assert "uninstall" not in result.stdout
 
     def test_legacy_init_command(self):
         """Test legacy init command works through Typer."""
@@ -126,7 +127,8 @@ class TestLegacyApp:
         assert "init" in result.stdout
         assert "update" in result.stdout
         assert "upgrade" in result.stdout
-        assert "uninstall" in result.stdout
+        # uninstall is now a Typer command at top level, not in legacy
+        assert "uninstall" not in result.stdout
 
     def test_legacy_init_direct(self):
         """Test legacy init command directly with global --path."""
