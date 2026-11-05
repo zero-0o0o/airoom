@@ -142,6 +142,12 @@ def _create_args_namespace(**kwargs):
 def _legacy_init(ctx: typer.Context) -> int:
     """Initialize AIroom in a project."""
     global_opts = ctx.obj if ctx.obj else GlobalOptions()
+    if global_opts.dry_run:
+        from airoom.core.logging import get_logger
+        log = get_logger(__name__)
+        log.info("Dry run: skipping init")
+        console.print("[yellow]Dry run:[/yellow] Would initialize AIroom in project")
+        return 0
     args = _create_args_namespace(path=str(global_opts.path) if global_opts.path else None)
     return init_command(args)
 
@@ -149,6 +155,12 @@ def _legacy_init(ctx: typer.Context) -> int:
 def _legacy_update(ctx: typer.Context) -> int:
     """Update project resources."""
     global_opts = ctx.obj if ctx.obj else GlobalOptions()
+    if global_opts.dry_run:
+        from airoom.core.logging import get_logger
+        log = get_logger(__name__)
+        log.info("Dry run: skipping update")
+        console.print("[yellow]Dry run:[/yellow] Would update project resources")
+        return 0
     args = _create_args_namespace(path=str(global_opts.path) if global_opts.path else None)
     return update_command(args)
 

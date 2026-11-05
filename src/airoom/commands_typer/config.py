@@ -42,29 +42,23 @@ def _render_config_human(config) -> None:
     table.add_column("Key", style="cyan", min_width=20)
     table.add_column("Value", style="dim")
 
-    # Top-level keys
-    table.add_row("skips", str(config.skips))
-    table.add_row("dry_run", str(config.dry_run))
-    table.add_row("verbose", str(config.verbose))
-
-    # Defaults (nested)
-    if config.defaults:
-        for key, value in sorted(config.defaults.items()):
-            table.add_row(f"defaults.{key}", str(value))
-    else:
-        table.add_row("defaults", "(empty)")
+    # Iterate over all config attributes
+    for key, value in config.__dict__.items():
+        if key == "defaults" and isinstance(value, dict):
+            if value:
+                for nested_key, nested_value in sorted(value.items()):
+                    table.add_row(f"defaults.{nested_key}", str(nested_value))
+            else:
+                table.add_row("defaults", "(empty)")
+        else:
+            table.add_row(key, str(value))
 
     console.print(table)
 
 
 def _render_config_json(config) -> None:
     """Render config as JSON."""
-    output = {
-        "skips": config.skips,
-        "defaults": config.defaults,
-        "dry_run": config.dry_run,
-        "verbose": config.verbose,
-    }
+    output = {key: value for key, value in config.__dict__.items()}
     print(json.dumps(output, indent=2))
 
 
@@ -121,6 +115,24 @@ def config_set(
     ] = False,
 ) -> None:
     """Set a configuration value using dot notation."""
+    global_opts = ctx.obj
+    dry_run = global_opts.dry_run if global_opts else False
+    if dry_run:
+        from airoom.core.logging import get_logger
+        log = get_logger(__name__)
+        log.info("Dry run: skipping config set")
+        if use_json := _get_json_output(ctx, json_output):
+            print(json.dumps({
+                "status": "ok",
+                "dry_run": True,
+                "message": "Dry run: would set config",
+                "key": key,
+                "value": value
+            }, indent=2))
+        else:
+            console.print(f"[yellow]Dry run:[/yellow] Would set {key} = {value!r}")
+        return
+
     use_json = _get_json_output(ctx, json_output)
     project = _get_project(ctx, path)
 
@@ -176,6 +188,23 @@ def config_unset(
     ] = False,
 ) -> None:
     """Unset a configuration value using dot notation."""
+    global_opts = ctx.obj
+    dry_run = global_opts.dry_run if global_opts else False
+    if dry_run:
+        from airoom.core.logging import get_logger
+        log = get_logger(__name__)
+        log.info("Dry run: skipping config unset")
+        if use_json := _get_json_output(ctx, json_output):
+            print(json.dumps({
+                "status": "ok",
+                "dry_run": True,
+                "message": "Dry run: would unset config",
+                "key": key
+            }, indent=2))
+        else:
+            console.print(f"[yellow]Dry run:[/yellow] Would unset {key!r}")
+        return
+
     use_json = _get_json_output(ctx, json_output)
     project = _get_project(ctx, path)
 
@@ -244,17 +273,3 @@ def _parse_value(value: str):
 
     # String (default)
     return value
-
-
-if __name__ == "__main__":
-    import sys
-    from typer.testing import CliRunner
-
-    # Quick manual test
-    runner = CliRunner()
-    with tempfile.TemporaryDirectory() as tmpdir:
-        from airoom.cli import app
-        result = runner.invoke(app, ["--path", tmpdir, "legacy", "init"])
-        print("init:", result.exit_code, result.stdout)
-        result = runner.invoke(app, ["--path", tmpdir, "config", "show"])
-        print("show:", result.exit_code, result.stdout)

@@ -2,7 +2,8 @@
 
 import json
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Callable
+from functools import wraps
 
 import typer
 from rich.console import Console
@@ -28,12 +29,47 @@ def _get_project(ctx: typer.Context, path: Optional[Path] = None) -> Project:
     return Project(project_path)
 
 
+def _get_json_output(ctx: typer.Context, local_json: bool) -> bool:
+    """Determine JSON output from global and local options."""
+    global_opts = ctx.obj
+    if global_opts and global_opts.json_output and not local_json:
+        return True
+    return local_json
+
+
+def _require_project(ctx: typer.Context, path: Optional[Path] = None, json_output: bool = False) -> tuple[Project, RegistryManager, bool]:
+    """Get project and registry manager, verifying project is initialized.
+
+    Returns:
+        Tuple of (project, registry_manager, use_json)
+
+    Raises:
+        typer.Exit: If project is not initialized.
+    """
+    project = _get_project(ctx, path)
+    use_json = _get_json_output(ctx, json_output)
+
+    if not project.airoom_dir.exists():
+        if use_json:
+            print(json.dumps({
+                "error": "Project not initialized",
+                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
+            }, indent=2))
+        else:
+            console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
+            console.print("Run 'airoom init' to initialize AIroom in this project.")
+        raise typer.Exit(1)
+
+    registry_manager = RegistryManager(project)
+    return project, registry_manager, use_json
+
+
 def _render_artifact_table(artifacts: dict) -> None:
     """Render artifacts as a Rich table."""
     if not artifacts:
         console.print("[dim]No artifacts registered[/dim]")
         return
-    
+
     table = Table(title="AIroom Registry Artifacts", show_header=True, header_style="bold")
     table.add_column("ID", style="cyan", min_width=15)
     table.add_column("Owner", style="green", min_width=12)
@@ -41,11 +77,11 @@ def _render_artifact_table(artifacts: dict) -> None:
     table.add_column("Type", justify="center", min_width=6)
     table.add_column("Mgmt", justify="center", min_width=6)
     table.add_column("Status", justify="center", min_width=10)
-    
+
     for artifact_id, entry in sorted(artifacts.items()):
         status = entry.get("status", "unknown")
         status_color = "green" if status == "active" else "yellow" if status == "inactive" else "red"
-        
+
         table.add_row(
             artifact_id,
             entry.get("owner", ""),
@@ -54,7 +90,7 @@ def _render_artifact_table(artifacts: dict) -> None:
             entry.get("management", ""),
             f"[{status_color}]{status}[/{status_color}]",
         )
-    
+
     console.print(table)
 
 
@@ -78,7 +114,7 @@ def _render_single_artifact_human(artifact_id: str, entry: dict) -> None:
     status = entry.get('status', '')
     status_color = "green" if status == "active" else "yellow" if status == "inactive" else "red"
     console.print(f"  Status: [{status_color}]{status}[/{status_color}]")
-    
+
     if entry.get("original_path"):
         console.print(f"  [dim]Original Path:[/dim] {entry['original_path']}")
     if entry.get("version"):
@@ -94,14 +130,6 @@ def _render_single_artifact_json(artifact_id: str, entry: dict) -> None:
     print(json.dumps(output, indent=2))
 
 
-def _get_json_output(ctx: typer.Context, local_json: bool) -> bool:
-    """Determine JSON output from global and local options."""
-    global_opts = ctx.obj
-    if global_opts and global_opts.json_output and not local_json:
-        return True
-    return local_json
-
-
 @registry_app.command("list")
 def registry_list(
     ctx: typer.Context,
@@ -115,23 +143,8 @@ def registry_list(
     ] = False,
 ) -> None:
     """List all artifacts in the registry."""
-    use_json = _get_json_output(ctx, json_output)
-    
-    project = _get_project(ctx, path)
-    
-    # Verify project has been initialized
-    if not project.airoom_dir.exists():
-        if use_json:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
-        else:
-            console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
-            console.print("Run 'airoom init' to initialize AIroom in this project.")
-        raise typer.Exit(1)
-    
-    registry_manager = RegistryManager(project)
+    project, registry_manager, use_json = _require_project(ctx, path, json_output)
+
     try:
         registry = registry_manager.read()
     except RegistryError as exc:
@@ -143,9 +156,9 @@ def registry_list(
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
-    
+
     artifacts = registry.get("artifacts", {})
-    
+
     if use_json:
         _render_artifact_json(artifacts)
     else:
@@ -164,7 +177,7 @@ def registry_add(
     original_path: Annotated[Optional[str], typer.Option("--original-path", help="Original source path")] = None,
     version: Annotated[Optional[str], typer.Option("--version", help="Artifact version")] = None,
     output_setting: Annotated[Optional[str], typer.Option("--output-setting", help="Output setting")] = None,
-    path: Annotated[
+    project_path: Annotated[
         Optional[Path],
         typer.Option("--path", "-p", help="Project directory"),
     ] = None,
@@ -174,21 +187,25 @@ def registry_add(
     ] = False,
 ) -> None:
     """Add an artifact to the registry."""
-    use_json = _get_json_output(ctx, json_output)
-    project = _get_project(ctx, path)
-    
-    # Verify project has been initialized
-    if not project.airoom_dir.exists():
-        if use_json:
+    global_opts = ctx.obj
+    dry_run = global_opts.dry_run if global_opts else False
+    if dry_run:
+        from airoom.core.logging import get_logger
+        log = get_logger(__name__)
+        log.info("Dry run: skipping registry add")
+        if use_json := _get_json_output(ctx, json_output):
             print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
+                "status": "ok",
+                "dry_run": True,
+                "message": "Dry run: would add artifact",
+                "artifact_id": artifact_id
             }, indent=2))
         else:
-            console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
-            console.print("Run 'airoom init' to initialize AIroom in this project.")
-        raise typer.Exit(1)
-    
+            console.print(f"[yellow]Dry run:[/yellow] Would add artifact {artifact_id!r}")
+        return
+
+    project, registry_manager, use_json = _require_project(ctx, project_path, json_output)
+
     # Build artifact entry
     entry = {
         "owner": owner,
@@ -203,8 +220,7 @@ def registry_add(
         entry["version"] = version
     if output_setting is not None:
         entry["output_setting"] = output_setting
-    
-    registry_manager = RegistryManager(project)
+
     try:
         registry_manager.add_artifact(artifact_id, entry)
     except RegistryError as exc:
@@ -216,7 +232,7 @@ def registry_add(
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
-    
+
     if use_json:
         print(json.dumps({
             "status": "ok",
@@ -232,7 +248,8 @@ def registry_remove(
     ctx: typer.Context,
     artifact_id: Annotated[str, typer.Argument(help="Artifact identifier to remove")],
     force: Annotated[bool, typer.Option("--force", "-f", help="Skip confirmation prompt")] = False,
-    path: Annotated[
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Alias for --force, for scripted use")] = False,
+    project_path: Annotated[
         Optional[Path],
         typer.Option("--path", "-p", help="Project directory"),
     ] = None,
@@ -242,36 +259,28 @@ def registry_remove(
     ] = False,
 ) -> None:
     """Remove an artifact from the registry."""
-    use_json = _get_json_output(ctx, json_output)
-    project = _get_project(ctx, path)
-    
-    # Verify project has been initialized
-    if not project.airoom_dir.exists():
-        if use_json:
+    global_opts = ctx.obj
+    dry_run = global_opts.dry_run if global_opts else False
+    if dry_run:
+        from airoom.core.logging import get_logger
+        log = get_logger(__name__)
+        log.info("Dry run: skipping registry remove")
+        if use_json := _get_json_output(ctx, json_output):
             print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
+                "status": "ok",
+                "dry_run": True,
+                "message": "Dry run: would remove artifact",
+                "artifact_id": artifact_id
             }, indent=2))
         else:
-            console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
-            console.print("Run 'airoom init' to initialize AIroom in this project.")
-        raise typer.Exit(1)
-    
-    registry_manager = RegistryManager(project)
-    
-    # Check if artifact exists first
-    try:
-        registry = registry_manager.read()
-    except RegistryError as exc:
-        if use_json:
-            print(json.dumps({
-                "error": "Registry error",
-                "details": str(exc)
-            }, indent=2))
-        else:
-            console.print(f"[red]Error:[/red] {exc}")
-        raise typer.Exit(1)
-    
+            console.print(f"[yellow]Dry run:[/yellow] Would remove artifact {artifact_id!r}")
+        return
+
+    project, registry_manager, use_json = _require_project(ctx, project_path, json_output)
+
+    # Check if artifact exists first (let remove_artifact handle "not found" in one read)
+    # We still need to check for confirmation prompt logic
+    registry = registry_manager.read()
     if artifact_id not in registry.get("artifacts", {}):
         if use_json:
             print(json.dumps({
@@ -281,13 +290,14 @@ def registry_remove(
         else:
             console.print(f"[red]Error:[/red] Artifact {artifact_id!r} not found in registry")
         raise typer.Exit(1)
-    
-    # Confirmation prompt if not forced
-    if not force:
+
+    # Confirmation prompt if not forced (--force, -f, or --yes, -y)
+    is_forced = force or yes
+    if not is_forced:
         if use_json:
             print(json.dumps({
                 "error": "Confirmation required",
-                "details": "Use --force to skip confirmation prompt"
+                "details": "Use --force or --yes to skip confirmation prompt"
             }, indent=2))
             raise typer.Exit(1)
         else:
@@ -295,7 +305,7 @@ def registry_remove(
             if not confirm:
                 console.print("[yellow]Cancelled[/yellow]")
                 raise typer.Exit(1)
-    
+
     try:
         registry_manager.remove_artifact(artifact_id)
     except RegistryError as exc:
@@ -307,7 +317,7 @@ def registry_remove(
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
-    
+
     if use_json:
         print(json.dumps({
             "status": "ok",
@@ -320,7 +330,7 @@ def registry_remove(
 @registry_app.command("validate")
 def registry_validate(
     ctx: typer.Context,
-    path: Annotated[
+    project_path: Annotated[
         Optional[Path],
         typer.Option("--path", "-p", help="Project directory"),
     ] = None,
@@ -330,22 +340,8 @@ def registry_validate(
     ] = False,
 ) -> None:
     """Validate the registry schema and structure."""
-    use_json = _get_json_output(ctx, json_output)
-    project = _get_project(ctx, path)
-    
-    # Verify project has been initialized
-    if not project.airoom_dir.exists():
-        if use_json:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
-        else:
-            console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
-            console.print("Run 'airoom init' to initialize AIroom in this project.")
-        raise typer.Exit(1)
-    
-    registry_manager = RegistryManager(project)
+    project, registry_manager, use_json = _require_project(ctx, project_path, json_output)
+
     try:
         is_valid, errors = registry_manager.validate()
     except RegistryError as exc:
@@ -357,7 +353,7 @@ def registry_validate(
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
-    
+
     if use_json:
         print(json.dumps({
             "valid": is_valid,
@@ -379,7 +375,7 @@ def registry_validate(
 def registry_show(
     ctx: typer.Context,
     artifact_id: Annotated[str, typer.Argument(help="Artifact identifier to show")],
-    path: Annotated[
+    project_path: Annotated[
         Optional[Path],
         typer.Option("--path", "-p", help="Project directory"),
     ] = None,
@@ -389,22 +385,8 @@ def registry_show(
     ] = False,
 ) -> None:
     """Show details of a specific artifact."""
-    use_json = _get_json_output(ctx, json_output)
-    project = _get_project(ctx, path)
-    
-    # Verify project has been initialized
-    if not project.airoom_dir.exists():
-        if use_json:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
-        else:
-            console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
-            console.print("Run 'airoom init' to initialize AIroom in this project.")
-        raise typer.Exit(1)
-    
-    registry_manager = RegistryManager(project)
+    project, registry_manager, use_json = _require_project(ctx, project_path, json_output)
+
     try:
         registry = registry_manager.read()
     except RegistryError as exc:
@@ -416,7 +398,7 @@ def registry_show(
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
-    
+
     artifacts = registry.get("artifacts", {})
     if artifact_id not in artifacts:
         if use_json:
@@ -427,9 +409,9 @@ def registry_show(
         else:
             console.print(f"[red]Error:[/red] Artifact {artifact_id!r} not found in registry")
         raise typer.Exit(1)
-    
+
     entry = artifacts[artifact_id]
-    
+
     if use_json:
         _render_single_artifact_json(artifact_id, entry)
     else:
