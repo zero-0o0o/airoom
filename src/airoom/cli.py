@@ -9,7 +9,6 @@ from rich.console import Console
 
 from airoom import __version__
 from airoom.commands.init import init_command
-from airoom.commands.update import update_command
 from airoom.commands.upgrade import upgrade_command
 from airoom.commands.uninstall import uninstall_command
 from airoom.commands_typer.status import status
@@ -20,6 +19,7 @@ from airoom.commands_typer.organize import organize
 from airoom.commands_typer.config import config_app
 from airoom.commands_typer.completion import completion_app
 from airoom.commands_typer.init import init_app
+from airoom.commands_typer.update import update_app
 from airoom.core.logging import configure_logging
 from airoom.core.types import GlobalOptions
 
@@ -154,7 +154,7 @@ def _legacy_init(ctx: typer.Context) -> int:
 
 
 def _legacy_update(ctx: typer.Context) -> int:
-    """Update project resources."""
+    """Update project resources (legacy)."""
     global_opts = ctx.obj if ctx.obj else GlobalOptions()
     if global_opts.dry_run:
         from airoom.core.logging import get_logger
@@ -163,6 +163,7 @@ def _legacy_update(ctx: typer.Context) -> int:
         console.print("[yellow]Dry run:[/yellow] Would update project resources")
         return 0
     args = _create_args_namespace(path=str(global_opts.path) if global_opts.path else None)
+    from airoom.commands.update import update_command
     return update_command(args)
 
 
@@ -205,9 +206,9 @@ app.add_typer(registry_app, name="registry")
 app.add_typer(config_app, name="config")
 app.add_typer(completion_app, name="completion")
 app.add_typer(init_app, name="init")
+app.add_typer(update_app, name="update")
 
 # Register legacy commands at top level (for backward compatibility) - hidden from help
-app.command("update", help="Update project resources", hidden=True)(_legacy_update)
 app.command("upgrade", help="Upgrade the global CLI", hidden=True)(_legacy_upgrade)
 app.command("uninstall", help="Uninstall the global CLI", hidden=True)(_legacy_uninstall)
 
