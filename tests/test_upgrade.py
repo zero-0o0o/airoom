@@ -8,7 +8,6 @@ import pytest
 
 from airoom.commands.upgrade import (
     upgrade_command,
-    get_installed_version,
     get_pipx_path,
     is_installed_via_pipx,
     parse_version,
@@ -19,6 +18,7 @@ from airoom.commands.upgrade import (
     verify_installation,
     Release,
 )
+from airoom.core.version import get_installed_version
 
 
 class TestVersionParsing:

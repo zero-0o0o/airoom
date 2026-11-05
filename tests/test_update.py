@@ -12,16 +12,17 @@ import ruamel.yaml
 
 from airoom.commands.update import (
     update_command,
-    compute_file_hash,
-    read_version_file,
-    write_version_file,
-    list_packaged_skills,
-    list_packaged_templates,
     update_skill,
     update_registry,
     update_agents_md_section,
+    update_airoom_md,
 )
 from airoom.commands.init import init_command, AIROOM_START, AIROOM_END
+from airoom.core.atomic import compute_file_hash
+from airoom.core.version import read_version_file, write_version_file
+from airoom.core.resources import ResourceManager
+from airoom.core.baseline import BaselineManager, compute_file_hash_from_bytes
+from airoom.core.project import Project
 
 
 class TestComputeFileHash:
@@ -83,7 +84,8 @@ class TestListPackagedResources:
 
     def test_list_packaged_skills(self):
         """Test listing packaged skills."""
-        skills = list_packaged_skills()
+        rm = ResourceManager()
+        skills = rm.list_packaged_skills()
         assert "artifact-discovery" in skills
         assert "artifact-organization" in skills
         assert "registry-management" in skills
@@ -92,7 +94,8 @@ class TestListPackagedResources:
 
     def test_list_packaged_templates(self):
         """Test listing packaged templates."""
-        templates = list_packaged_templates()
+        rm = ResourceManager()
+        templates = rm.list_packaged_templates()
         assert "AGENTS.md" in templates
         assert "AIROOM.md" in templates
         assert "registry.yaml" in templates

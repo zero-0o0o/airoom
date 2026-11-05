@@ -8,12 +8,12 @@ from airoom.commands.uninstall import (
     uninstall_command,
     get_pipx_path,
     is_installed_via_pipx,
-    get_installed_version,
     uninstall_via_pipx,
     verify_uninstallation,
     is_interactive,
     prompt_confirmation,
 )
+from airoom.core.version import get_installed_version
 
 
 class TestPipxDetection:

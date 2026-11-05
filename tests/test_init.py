@@ -16,6 +16,10 @@ from airoom.commands.init import (
     AIROOM_START,
     AIROOM_END,
 )
+from airoom.core.project import assert_safe_project_path
+from airoom.core.safety import ensure_directory
+from airoom.core.atomic import atomic_write
+from airoom.core.resources import ResourceManager
 
 
 class TestFindProjectRoot:

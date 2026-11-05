@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from airoom.registry import RegistryError, atomic_write, parse_registry
+from airoom.core.registry import RegistryError, parse_registry
+from airoom.core.atomic import atomic_write, AtomicWriteError
 
 
 VALID = """version: 1
@@ -73,7 +74,7 @@ def test_atomic_write_aborts_if_file_changed(tmp_path: Path):
     original = target.read_text(encoding="utf-8")
     target.write_text("concurrent update", encoding="utf-8")
 
-    with pytest.raises(RegistryError, match="concurrent modification"):
+    with pytest.raises(AtomicWriteError, match="concurrent modification"):
         atomic_write(target, "replacement", expected_text=original)
     assert target.read_text(encoding="utf-8") == "concurrent update"
 
@@ -84,3 +85,7 @@ def test_atomic_write_replaces_file_and_cleans_temp(tmp_path: Path):
     atomic_write(target, "after", expected_text="before")
     assert target.read_text(encoding="utf-8") == "after"
     assert list(tmp_path.glob("*.tmp")) == []
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
