@@ -19,6 +19,8 @@ from airoom.commands_typer.discover import discover
 from airoom.commands_typer.organize import organize
 from airoom.commands_typer.config import config_app
 from airoom.commands_typer.completion import completion_app
+from airoom.core.logging import configure_logging
+from airoom.core.types import GlobalOptions
 
 console = Console()
 
@@ -35,22 +37,6 @@ legacy_app = typer.Typer(
     rich_markup_mode="rich",
     add_completion=False,
 )
-
-
-class GlobalOptions:
-    """Container for global CLI options."""
-
-    def __init__(
-        self,
-        path: Optional[Path] = None,
-        verbose: int = 0,
-        json_output: bool = False,
-        dry_run: bool = False,
-    ):
-        self.path = path
-        self.verbose = verbose
-        self.json_output = json_output
-        self.dry_run = dry_run
 
 
 def version_callback(value: bool) -> None:
@@ -90,6 +76,8 @@ def global_options_callback(
         json_output=json_output,
         dry_run=dry_run,
     )
+    # Configure logging based on global options
+    configure_logging(ctx.obj)
     # If no command is invoked, show help
     if ctx.invoked_subcommand is None:
         console.print(ctx.get_help())
@@ -124,11 +112,13 @@ def legacy_callback(
     # Inherit from parent context if available
     parent_obj = ctx.parent.obj if ctx.parent and ctx.parent.obj else None
     if parent_obj:
+        # Use explicit checks instead of `or` to correctly handle falsy values
+        # (e.g., path=None should not override parent path)
         ctx.obj = GlobalOptions(
-            path=path or parent_obj.path,
-            verbose=verbose or parent_obj.verbose,
-            json_output=json_output or parent_obj.json_output,
-            dry_run=dry_run or parent_obj.dry_run,
+            path=parent_obj.path if path is None else path,
+            verbose=parent_obj.verbose if verbose == 0 else verbose,
+            json_output=parent_obj.json_output if not json_output else json_output,
+            dry_run=parent_obj.dry_run if not dry_run else dry_run,
         )
     else:
         ctx.obj = GlobalOptions(
@@ -202,13 +192,13 @@ app.add_typer(registry_app, name="registry")
 app.add_typer(config_app, name="config")
 app.add_typer(completion_app, name="completion")
 
-# Register legacy commands at top level (for backward compatibility)
-app.command("init", help="Initialize AIroom in a project")(_legacy_init)
-app.command("update", help="Update project resources")(_legacy_update)
-app.command("upgrade", help="Upgrade the global CLI")(_legacy_upgrade)
-app.command("uninstall", help="Uninstall the global CLI")(_legacy_uninstall)
+# Register legacy commands at top level (for backward compatibility) - hidden from help
+app.command("init", help="Initialize AIroom in a project", hidden=True)(_legacy_init)
+app.command("update", help="Update project resources", hidden=True)(_legacy_update)
+app.command("upgrade", help="Upgrade the global CLI", hidden=True)(_legacy_upgrade)
+app.command("uninstall", help="Uninstall the global CLI", hidden=True)(_legacy_uninstall)
 
-# Register legacy commands under legacy subcommand group
+# Register legacy commands under legacy subcommand group (visible in help)
 legacy_app.command("init", help="Initialize AIroom in a project")(_legacy_init)
 legacy_app.command("update", help="Update project resources")(_legacy_update)
 legacy_app.command("upgrade", help="Upgrade the global CLI")(_legacy_upgrade)

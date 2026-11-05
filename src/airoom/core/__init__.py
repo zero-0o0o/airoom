@@ -72,6 +72,18 @@ from airoom.core.config import (
     ConfigManager,
 )
 
+# Structured logging
+from airoom.core.logging import (
+    configure_logging,
+    get_logger,
+    JSONFormatter,
+)
+
+# Shared types
+from airoom.core.types import (
+    GlobalOptions,
+)
+
 
 __all__ = [
     # Project
@@ -113,4 +125,10 @@ __all__ = [
     # Config
     "Config",
     "ConfigManager",
+    # Logging
+    "configure_logging",
+    "get_logger",
+    "JSONFormatter",
+    # Types
+    "GlobalOptions",
 ]
