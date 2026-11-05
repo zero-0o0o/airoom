@@ -19,6 +19,7 @@ from airoom.commands_typer.discover import discover
 from airoom.commands_typer.organize import organize
 from airoom.commands_typer.config import config_app
 from airoom.commands_typer.completion import completion_app
+from airoom.commands_typer.init import init_app
 from airoom.core.logging import configure_logging
 from airoom.core.types import GlobalOptions
 
@@ -203,9 +204,9 @@ app.command("organize", help="Organize artifacts under airoom/artifacts/")(organ
 app.add_typer(registry_app, name="registry")
 app.add_typer(config_app, name="config")
 app.add_typer(completion_app, name="completion")
+app.add_typer(init_app, name="init")
 
 # Register legacy commands at top level (for backward compatibility) - hidden from help
-app.command("init", help="Initialize AIroom in a project", hidden=True)(_legacy_init)
 app.command("update", help="Update project resources", hidden=True)(_legacy_update)
 app.command("upgrade", help="Upgrade the global CLI", hidden=True)(_legacy_upgrade)
 app.command("uninstall", help="Uninstall the global CLI", hidden=True)(_legacy_uninstall)
