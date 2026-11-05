@@ -29,7 +29,47 @@ airoom uninstall
 - `upgrade` changes only the globally installed CLI.
 - `uninstall` removes only the verified pipx CLI; it requires confirmation or `--yes`.
 
-## Project layout
+## CLI Commands
+
+AIroom provides 11 commands for project and CLI management:
+
+### Project Resource Commands
+
+| Command | Description |
+|---------|-------------|
+| `airoom init` | Initialize AIroom in a project (create directories, skills, registry, AGENTS.md section) |
+| `airoom update` | Update project resources against baseline; preserves user edits, reports conflicts |
+| `airoom status` | Show project health summary (initialization state, version, baseline) |
+| `airoom doctor` | Diagnose and repair common issues (missing files, registry validation) |
+| `airoom discover` | Discover AI artifacts and registry discrepancies (Graphify, Superpowers, etc.) |
+| `airoom organize` | Organize discovered artifacts under `airoom/artifacts/` interactively |
+| `airoom registry` | Manage artifact registry (list, add, remove, validate, show) |
+| `airoom config` | Manage project configuration (show, set, unset) |
+
+### Global CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `airoom upgrade` | Upgrade the globally installed CLI via pipx |
+| `airoom uninstall` | Uninstall the global CLI (requires confirmation or `--yes`) |
+| `airoom completion` | Generate shell completion script (bash, zsh, fish) |
+
+### Global Options
+
+All commands support:
+
+```
+--path, -p       Project directory (default: current directory)
+--verbose, -v    Increase verbosity (repeatable)
+--json           Output JSON instead of human-readable text
+--dry-run        Preview changes without writing
+--version        Show version and exit
+--help           Show help message and exit
+```
+
+See [docs/cli-reference.md](docs/cli-reference.md) for full command reference with all options and examples.
+
+## Project Layout
 
 ```text
 project/
@@ -72,7 +112,7 @@ ruff format --check .
 python -m build
 ```
 
-See [architecture.md](architecture.md) for boundaries, update behavior, registry schema, and known distribution limits. See [CHANGELOG.md](CHANGELOG.md) for changes.
+See [architecture.md](architecture.md) for boundaries, update behavior, registry schema, and known distribution limits. See [CHANGELOG.md](CHANGELOG.md) for changes. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## License
 
