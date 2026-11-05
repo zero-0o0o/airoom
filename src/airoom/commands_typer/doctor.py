@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from airoom import __version__
+from airoom.commands_typer.init import AIROOM_START, AIROOM_END
 from airoom.core.atomic import atomic_write, compute_file_hash, AtomicWriteError
 from airoom.core.baseline import BaselineManager, compute_file_hash_from_bytes
 from airoom.core.discovery import DiscoveryEngine
@@ -132,7 +133,6 @@ def _check_baseline(project: Project, baseline_manager: BaselineManager, fix: bo
                 continue
             # Read the AIroom section
             content = agents_path.read_text(encoding="utf-8")
-            from airoom.commands.init import AIROOM_START, AIROOM_END
             start_idx = content.find(AIROOM_START)
             end_idx = content.find(AIROOM_END)
             if start_idx == -1 or end_idx == -1 or end_idx < start_idx:
@@ -208,7 +208,6 @@ def _recreate_baseline(project: Project, baseline_manager: BaselineManager) -> N
     
     # AGENTS.md section
     agents_path = project.root / "AGENTS.md"
-    from airoom.commands.init import AIROOM_START, AIROOM_END
     if agents_path.exists():
         content = agents_path.read_text(encoding="utf-8")
         start_idx = content.find(AIROOM_START)

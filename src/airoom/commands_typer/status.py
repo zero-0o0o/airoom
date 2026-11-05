@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.table import Table
 
 from airoom import __version__
+from airoom.commands_typer.init import AIROOM_START, AIROOM_END
 from airoom.core.baseline import BaselineManager
 from airoom.core.project import Project
 from airoom.core.registry import RegistryManager
@@ -83,7 +84,6 @@ def _check_baseline(project: Project, baseline_manager: BaselineManager) -> dict
                 continue
             # Read the AIroom section
             content = agents_path.read_text(encoding="utf-8")
-            from airoom.commands.init import AIROOM_START, AIROOM_END
             start_idx = content.find(AIROOM_START)
             end_idx = content.find(AIROOM_END)
             if start_idx == -1 or end_idx == -1 or end_idx < start_idx:

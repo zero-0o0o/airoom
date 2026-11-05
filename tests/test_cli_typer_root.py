@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 from typer.testing import CliRunner
 
-from airoom.cli import app, legacy_app
+from airoom.cli import app
 
 
 class TestTyperApp:
@@ -27,7 +27,7 @@ class TestTyperApp:
         result = self.runner.invoke(app, ["--help"])
         assert result.exit_code == 0
         assert "AIroom" in result.stdout
-        assert "legacy" in result.stdout  # legacy subcommand group
+        assert "legacy" not in result.stdout  # legacy subcommand group removed
 
     def test_version_output(self):
         """Test that --version works."""
@@ -38,61 +38,75 @@ class TestTyperApp:
     def test_global_option_path(self):
         """Test --path/-p global option."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(app, ["--path", tmpdir, "legacy", "init"])
+            result = self.runner.invoke(app, ["--path", tmpdir, "init"])
             assert result.exit_code in (0, 1)
 
     def test_global_option_verbose(self):
         """Test --verbose/-v global option (count)."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(app, ["-v", "--path", tmpdir, "legacy", "init"])
+            result = self.runner.invoke(app, ["-v", "--path", tmpdir, "init"])
             assert result.exit_code in (0, 1)
-            result = self.runner.invoke(app, ["-vv", "--path", tmpdir, "legacy", "init"])
+            result = self.runner.invoke(app, ["-vv", "--path", tmpdir, "init"])
             assert result.exit_code in (0, 1)
 
     def test_global_option_json(self):
         """Test --json global option."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(app, ["--json", "--path", tmpdir, "legacy", "init"])
+            result = self.runner.invoke(app, ["--json", "--path", tmpdir, "init"])
             assert result.exit_code in (0, 1)
 
     def test_global_option_dry_run(self):
         """Test --dry-run global option."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(app, ["--dry-run", "--path", tmpdir, "legacy", "init"])
+            result = self.runner.invoke(app, ["--dry-run", "--path", tmpdir, "init"])
             assert result.exit_code in (0, 1)
 
     def test_global_options_stored_in_context(self):
         """Test that global options are stored in ctx.obj."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(app, ["--path", tmpdir, "--verbose", "--json", "--dry-run", "legacy", "init"])
+            result = self.runner.invoke(app, ["--path", tmpdir, "--verbose", "--json", "--dry-run", "init"])
             assert result.exit_code in (0, 1)
 
-    def test_legacy_commands_registered(self):
-        """Test that legacy commands are registered as subcommand group."""
-        result = self.runner.invoke(app, ["legacy", "--help"])
+    def test_init_command_registered(self):
+        """Test that init command is registered at top level."""
+        result = self.runner.invoke(app, ["init", "--help"])
         assert result.exit_code == 0
-        assert "init" in result.stdout
-        assert "update" in result.stdout
-        assert "upgrade" in result.stdout
-        # uninstall is now a Typer command at top level, not in legacy
-        assert "uninstall" not in result.stdout
+        assert "Initialize" in result.stdout
 
-    def test_legacy_init_command(self):
-        """Test legacy init command works through Typer."""
+    def test_update_command_registered(self):
+        """Test that update command is registered at top level."""
+        result = self.runner.invoke(app, ["update", "--help"])
+        assert result.exit_code == 0
+        assert "Update" in result.stdout
+
+    def test_upgrade_command_registered(self):
+        """Test that upgrade command is registered at top level."""
+        result = self.runner.invoke(app, ["upgrade", "--help"])
+        assert result.exit_code == 0
+        assert "Upgrade" in result.stdout
+
+    def test_uninstall_command_registered(self):
+        """Test that uninstall command is registered at top level."""
+        result = self.runner.invoke(app, ["uninstall", "--help"])
+        assert result.exit_code == 0
+        assert "Uninstall" in result.stdout
+
+    def test_init_command(self):
+        """Test init command works through Typer."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(app, ["--path", tmpdir, "legacy", "init"])
+            result = self.runner.invoke(app, ["--path", tmpdir, "init"])
             assert result.exit_code == 0
             # Check that AIroom was initialized
             airoom_dir = Path(tmpdir) / "airoom"
             assert airoom_dir.exists()
 
-    def test_legacy_update_command(self):
-        """Test legacy update command works through Typer."""
+    def test_update_command(self):
+        """Test update command works through Typer."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # First initialize
-            self.runner.invoke(app, ["--path", tmpdir, "legacy", "init"])
+            self.runner.invoke(app, ["--path", tmpdir, "init"])
             # Then update
-            result = self.runner.invoke(app, ["--path", tmpdir, "legacy", "update"])
+            result = self.runner.invoke(app, ["--path", tmpdir, "update"])
             assert result.exit_code == 0
 
     def test_invalid_command(self):
@@ -107,36 +121,6 @@ class TestTyperApp:
         assert result.exit_code == 0
         assert "AIroom" in result.stdout
         assert "Usage:" in result.stdout
-
-
-class TestLegacyApp:
-    """Tests for the legacy argparse app (preserved for Phase 1-4)."""
-
-    def setup_method(self):
-        self.runner = CliRunner()
-
-    def test_legacy_app_exists(self):
-        """Test that legacy app is created."""
-        assert legacy_app is not None
-        assert legacy_app.info.name == "legacy"
-
-    def test_legacy_help(self):
-        """Test legacy --help."""
-        result = self.runner.invoke(legacy_app, ["--help"])
-        assert result.exit_code == 0
-        assert "init" in result.stdout
-        assert "update" in result.stdout
-        assert "upgrade" in result.stdout
-        # uninstall is now a Typer command at top level, not in legacy
-        assert "uninstall" not in result.stdout
-
-    def test_legacy_init_direct(self):
-        """Test legacy init command directly with global --path."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(legacy_app, ["--path", tmpdir, "init"])
-            assert result.exit_code == 0
-            airoom_dir = Path(tmpdir) / "airoom"
-            assert airoom_dir.exists()
 
 
 if __name__ == "__main__":

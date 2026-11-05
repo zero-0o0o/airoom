@@ -12,7 +12,7 @@ import ruamel.yaml
 from typer.testing import CliRunner
 
 from airoom.cli import app
-from airoom.commands.init import AIROOM_START, AIROOM_END
+from airoom.commands_typer.init import AIROOM_START, AIROOM_END
 from airoom.core.project import Project
 from airoom.core.baseline import BaselineManager, compute_file_hash_from_bytes
 from airoom.core.version import read_version_file

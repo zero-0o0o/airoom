@@ -18,7 +18,7 @@ class TestDiscoverCommand:
 
     def _init_project(self, tmpdir: str) -> Path:
         """Initialize an AIroom project in a temp directory."""
-        result = self.runner.invoke(app, ["--path", tmpdir, "legacy", "init"])
+        result = self.runner.invoke(app, ["--path", tmpdir, "init"])
         assert result.exit_code == 0
         return Path(tmpdir)
 

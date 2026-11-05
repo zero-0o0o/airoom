@@ -8,10 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from airoom.cli import app
-from airoom.commands.init import (
-    AIROOM_START,
-    AIROOM_END,
-)
+from airoom.commands_typer.init import AIROOM_START, AIROOM_END
 
 
 class TestTyperInitCommand:
