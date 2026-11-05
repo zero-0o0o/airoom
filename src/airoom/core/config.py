@@ -7,7 +7,6 @@ used by config CLI, logging setup, and other components.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import yaml
@@ -41,6 +40,7 @@ def _default_config() -> Config:
         dry_run=False,
         verbose=0,
     )
+
 
 # Known top-level config keys
 TOP_LEVEL_KEYS = {"skips", "defaults", "dry_run", "verbose"}

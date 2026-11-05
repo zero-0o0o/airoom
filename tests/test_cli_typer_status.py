@@ -34,7 +34,9 @@ class TestStatusCommand:
             result = self.runner.invoke(app, ["--path", tmpdir, "status"])
             # Should fail gracefully with an error message
             assert result.exit_code != 0
-            assert "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            assert (
+                "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            )
 
     def test_status_human_output_basic(self):
         """Test status command on a fresh initialized project (human output)."""
@@ -82,7 +84,7 @@ class TestStatusCommand:
             # Modify the project version to simulate mismatch
             version_file = Path(tmpdir) / "airoom" / ".airoom-version"
             version_file.write_text("0.0.1\n", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "status", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -98,12 +100,15 @@ class TestStatusCommand:
             skill_file = Path(tmpdir) / "airoom" / "skills" / "artifact-discovery" / "SKILL.md"
             if skill_file.exists():
                 skill_file.write_text("# Modified Skill\n\nContent changed.", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "status", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["baseline"]["status"] == "mismatch"
-            assert "mismatch" in data["baseline"]["details"].lower() or "modified" in data["baseline"]["details"].lower()
+            assert (
+                "mismatch" in data["baseline"]["details"].lower()
+                or "modified" in data["baseline"]["details"].lower()
+            )
 
     def test_status_registry_validation_failure(self):
         """Test status detects invalid registry."""
@@ -111,13 +116,18 @@ class TestStatusCommand:
             self._init_project(tmpdir)
             # Corrupt the registry
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
-            registry_file.write_text("version: 1\nversion: 1\nartifacts: {}\ntools: {}\n", encoding="utf-8")
-            
+            registry_file.write_text(
+                "version: 1\nversion: 1\nartifacts: {}\ntools: {}\n", encoding="utf-8"
+            )
+
             result = self.runner.invoke(app, ["--path", tmpdir, "status", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["registry"]["status"] == "invalid"
-            assert "duplicate" in data["registry"]["details"].lower() or "error" in data["registry"]["details"].lower()
+            assert (
+                "duplicate" in data["registry"]["details"].lower()
+                or "error" in data["registry"]["details"].lower()
+            )
 
     def test_status_artifact_existence_check_missing(self):
         """Test status detects missing managed artifact."""
@@ -127,6 +137,7 @@ class TestStatusCommand:
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             import yaml
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["artifacts"]["missing-artifact"] = {
@@ -134,13 +145,14 @@ class TestStatusCommand:
                 "path": "airoom/artifacts/missing-artifact",
                 "type": "file",
                 "management": "managed",
-                "status": "active"
+                "status": "active",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "status", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -154,6 +166,7 @@ class TestStatusCommand:
             # Add an external artifact to registry
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["artifacts"]["external-missing"] = {
@@ -161,13 +174,14 @@ class TestStatusCommand:
                 "path": "external/missing-file.txt",
                 "type": "file",
                 "management": "external",
-                "status": "active"
+                "status": "active",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "status", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -181,19 +195,21 @@ class TestStatusCommand:
             # Add a tool with config_path
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["tools"]["test-tool"] = {
                 "name": "Test Tool",
                 "status": "active",
                 "config_path": "airoom/config/test-tool.yaml",
-                "runtime_path": "airoom/runtime/test-tool"
+                "runtime_path": "airoom/runtime/test-tool",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "status", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -208,7 +224,13 @@ class TestStatusCommand:
             result = self.runner.invoke(app, ["--path", tmpdir, "status"])
             assert result.exit_code == 0
             # Should contain table-like output
-            assert "│" in result.stdout or "┌" in result.stdout or "└" in result.stdout or "┐" in result.stdout or "┘" in result.stdout
+            assert (
+                "│" in result.stdout
+                or "┌" in result.stdout
+                or "└" in result.stdout
+                or "┐" in result.stdout
+                or "┘" in result.stdout
+            )
             # Should have status indicators
             assert "✓" in result.stdout or "✗" in result.stdout
 

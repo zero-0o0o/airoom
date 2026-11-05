@@ -12,10 +12,10 @@ import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 from airoom.core.atomic import atomic_write
-from airoom.core.discovery import DiscoveryReport, DiscoveredArtifact
+from airoom.core.discovery import DiscoveryReport
 from airoom.core.project import Project
 from airoom.core.registry import RegistryManager
 
@@ -32,6 +32,7 @@ class RelocationAction:
         management: "managed" if relocating under airoom/artifacts/, "external" if staying in place.
         env_var: Environment variable to configure tool output path, if applicable.
     """
+
     source: Path
     target: Path
     artifact_id: str
@@ -48,6 +49,7 @@ class RelocationPlan:
         actions: List of relocation actions to execute.
         tool_configs: Mapping of tool_id to configuration dict with output_path and output_env.
     """
+
     actions: list[RelocationAction]
     tool_configs: dict[str, dict]
 

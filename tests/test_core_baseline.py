@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-from airoom.core.atomic import compute_file_hash
 from airoom.core.baseline import BaselineManager
 from airoom.core.project import Project
 
@@ -27,6 +26,7 @@ class TestBaselineManager:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_read_empty_baseline(self):
@@ -81,17 +81,16 @@ class TestBaselineManager:
 
     def test_write_atomic_behavior(self):
         """Test that write uses atomic_write (creates temp file, fsyncs, replaces atomically)."""
-        from airoom.core.atomic import AtomicWriteError
 
         baseline_data = {"test": "hash"}
         self.baseline_manager.write(baseline_data)
-        
+
         # Verify file exists and has correct content
         assert self.project.baseline_path.exists()
         content = self.project.baseline_path.read_text(encoding="utf-8")
         expected = json.dumps(baseline_data, indent=2, sort_keys=True) + "\n"
         assert content == expected
-        
+
         # No temp files left behind
         assert list(self.project.airoom_dir.glob("*.tmp")) == []
 
@@ -108,7 +107,11 @@ class TestBaselineManager:
 
         # Use atomic_write directly with expected_text (as update.py does)
         with pytest.raises(AtomicWriteError):
-            atomic_write(self.project.baseline_path, json.dumps({"other": "hash"}) + "\n", expected_text=original)
+            atomic_write(
+                self.project.baseline_path,
+                json.dumps({"other": "hash"}) + "\n",
+                expected_text=original,
+            )
 
     def test_update_hash(self):
         """Test updating hash for a resource."""
@@ -215,7 +218,7 @@ class TestBaselineManager:
         # Should be sorted alphabetically
         assert content.index("a_first") < content.index("z_last")
         # Should have indent=2 (check for spaces)
-        assert "  \"a_first\"" in content
+        assert '  "a_first"' in content
 
     def test_baseline_integration_with_project_paths(self):
         """Test baseline works with actual project resource paths."""

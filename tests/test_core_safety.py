@@ -25,6 +25,7 @@ class TestValidatePath:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_valid_relative_path(self):
@@ -59,7 +60,7 @@ class TestValidatePath:
 
     def test_path_with_empty_component_raises_error(self):
         """Test that path with empty component raises ValueError.
-        
+
         Note: PurePosixPath normalizes '//' away, so this test verifies
         the current behavior (which doesn't catch it at the parts level).
         The backslash check catches it on the raw string instead.
@@ -71,7 +72,7 @@ class TestValidatePath:
 
     def test_path_with_dot_component_raises_error(self):
         """Test that path with . component raises ValueError.
-        
+
         Note: PurePosixPath normalizes './' away, so this test verifies
         the current behavior (which doesn't catch it at the parts level).
         """
@@ -103,6 +104,7 @@ class TestCheckSymlinks:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_no_symlinks_returns_true(self):

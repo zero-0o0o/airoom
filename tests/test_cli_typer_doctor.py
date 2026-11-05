@@ -35,7 +35,9 @@ class TestDoctorCommand:
         with tempfile.TemporaryDirectory() as tmpdir:
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor"])
             assert result.exit_code != 0
-            assert "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            assert (
+                "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            )
 
     def test_doctor_human_output_healthy(self):
         """Test doctor command on a fresh initialized project (human output)."""
@@ -70,7 +72,15 @@ class TestDoctorCommand:
             assert "boundary" in data
             assert "orphaned_skills" in data
             # Each check should have status and details
-            for key in ["version", "baseline", "registry", "artifacts", "symlinks", "boundary", "orphaned_skills"]:
+            for key in [
+                "version",
+                "baseline",
+                "registry",
+                "artifacts",
+                "symlinks",
+                "boundary",
+                "orphaned_skills",
+            ]:
                 assert "status" in data[key]
                 assert "details" in data[key]
             # Fresh project should be healthy
@@ -88,12 +98,15 @@ class TestDoctorCommand:
             self._init_project(tmpdir)
             version_file = Path(tmpdir) / "airoom" / ".airoom-version"
             version_file.unlink()
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["version"]["status"] == "missing"
-            assert "not found" in data["version"]["details"].lower() or "missing" in data["version"]["details"].lower()
+            assert (
+                "not found" in data["version"]["details"].lower()
+                or "missing" in data["version"]["details"].lower()
+            )
 
     def test_doctor_missing_version_file_fix(self):
         """Test doctor --fix recreates missing .airoom-version file."""
@@ -101,7 +114,7 @@ class TestDoctorCommand:
             self._init_project(tmpdir)
             version_file = Path(tmpdir) / "airoom" / ".airoom-version"
             version_file.unlink()
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--fix", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -115,12 +128,15 @@ class TestDoctorCommand:
             self._init_project(tmpdir)
             baseline_file = Path(tmpdir) / "airoom" / ".airoom-baseline.json"
             baseline_file.unlink()
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["baseline"]["status"] == "missing"
-            assert "not found" in data["baseline"]["details"].lower() or "missing" in data["baseline"]["details"].lower()
+            assert (
+                "not found" in data["baseline"]["details"].lower()
+                or "missing" in data["baseline"]["details"].lower()
+            )
 
     def test_doctor_missing_baseline_file_fix(self):
         """Test doctor --fix recreates missing .airoom-baseline.json file."""
@@ -128,7 +144,7 @@ class TestDoctorCommand:
             self._init_project(tmpdir)
             baseline_file = Path(tmpdir) / "airoom" / ".airoom-baseline.json"
             baseline_file.unlink()
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--fix", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -147,12 +163,15 @@ class TestDoctorCommand:
             skill_file = Path(tmpdir) / "airoom" / "skills" / "artifact-discovery" / "SKILL.md"
             if skill_file.exists():
                 skill_file.write_text("# Modified Skill\n\nContent changed.", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["baseline"]["status"] == "mismatch"
-            assert "modified" in data["baseline"]["details"].lower() or "mismatch" in data["baseline"]["details"].lower()
+            assert (
+                "modified" in data["baseline"]["details"].lower()
+                or "mismatch" in data["baseline"]["details"].lower()
+            )
 
     def test_doctor_baseline_mismatch_no_autofix(self):
         """Test doctor --fix does NOT auto-fix baseline mismatches (user data)."""
@@ -163,7 +182,7 @@ class TestDoctorCommand:
             if skill_file.exists():
                 original_content = skill_file.read_text()
                 skill_file.write_text("# Modified Skill\n\nContent changed.", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--fix", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -179,12 +198,15 @@ class TestDoctorCommand:
             # Corrupt the registry with invalid schema
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             registry_file.write_text("version: 2\nartifacts: {}\ntools: {}\n", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["registry"]["status"] == "invalid"
-            assert "version" in data["registry"]["details"].lower() or "schema" in data["registry"]["details"].lower()
+            assert (
+                "version" in data["registry"]["details"].lower()
+                or "schema" in data["registry"]["details"].lower()
+            )
 
     def test_doctor_registry_schema_violation_fix(self):
         """Test doctor --fix removes invalid registry entries with confirmation."""
@@ -193,7 +215,7 @@ class TestDoctorCommand:
             # Corrupt the registry with invalid schema
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             registry_file.write_text("version: 2\nartifacts: {}\ntools: {}\n", encoding="utf-8")
-            
+
             # --fix should fix the registry (recreate from baseline/template)
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--fix", "--json"])
             assert result.exit_code == 0
@@ -210,6 +232,7 @@ class TestDoctorCommand:
             # Add a managed artifact to registry but don't create the file
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["artifacts"]["missing-artifact"] = {
@@ -217,13 +240,14 @@ class TestDoctorCommand:
                 "path": "airoom/artifacts/missing-artifact",
                 "type": "file",
                 "management": "managed",
-                "status": "active"
+                "status": "active",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -237,6 +261,7 @@ class TestDoctorCommand:
             # Add an external artifact to registry
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["artifacts"]["external-missing"] = {
@@ -244,13 +269,14 @@ class TestDoctorCommand:
                 "path": "external/missing-file.txt",
                 "type": "file",
                 "management": "external",
-                "status": "active"
+                "status": "active",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -267,12 +293,15 @@ class TestDoctorCommand:
             target_file.write_text("target", encoding="utf-8")
             symlink_path = airoom_dir / "link.txt"
             symlink_path.symlink_to(target_file)
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["symlinks"]["status"] == "found"
-            assert "link.txt" in data["symlinks"]["details"] or "symlink" in data["symlinks"]["details"].lower()
+            assert (
+                "link.txt" in data["symlinks"]["details"]
+                or "symlink" in data["symlinks"]["details"].lower()
+            )
 
     def test_doctor_path_boundary_violations(self):
         """Test doctor detects path boundary violations in registry."""
@@ -281,6 +310,7 @@ class TestDoctorCommand:
             # Add artifact with path containing ..
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["artifacts"]["boundary-violation"] = {
@@ -288,18 +318,22 @@ class TestDoctorCommand:
                 "path": "airoom/artifacts/../outside.txt",
                 "type": "file",
                 "management": "managed",
-                "status": "active"
+                "status": "active",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["boundary"]["status"] == "violation"
-            assert "boundary" in data["boundary"]["details"].lower() or ".." in data["boundary"]["details"]
+            assert (
+                "boundary" in data["boundary"]["details"].lower()
+                or ".." in data["boundary"]["details"]
+            )
 
     def test_doctor_orphaned_skills(self):
         """Test doctor detects orphaned skills (in project but not packaged)."""
@@ -310,7 +344,7 @@ class TestDoctorCommand:
             orphan_dir = skills_dir / "my-custom-skill"
             orphan_dir.mkdir(parents=True)
             (orphan_dir / "SKILL.md").write_text("# Custom Skill\n\nMy skill.", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -325,9 +359,10 @@ class TestDoctorCommand:
             skills_dir = Path(tmpdir) / "airoom" / "skills"
             artifacts_dir = Path(tmpdir) / "airoom" / "artifacts"
             import shutil
+
             shutil.rmtree(skills_dir)
             shutil.rmtree(artifacts_dir)
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--fix", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -358,8 +393,10 @@ class TestDoctorCommand:
             self._init_project(tmpdir)
             version_file = Path(tmpdir) / "airoom" / ".airoom-version"
             version_file.unlink()
-            
-            result = self.runner.invoke(app, ["--path", tmpdir, "--dry-run", "doctor", "--fix", "--json"])
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "--dry-run", "doctor", "--fix", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             # In dry-run mode, version should still show as missing (not actually fixed)
@@ -374,7 +411,13 @@ class TestDoctorCommand:
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor"])
             assert result.exit_code == 0
             # Should contain table-like output
-            assert "│" in result.stdout or "┌" in result.stdout or "└" in result.stdout or "┐" in result.stdout or "┘" in result.stdout
+            assert (
+                "│" in result.stdout
+                or "┌" in result.stdout
+                or "└" in result.stdout
+                or "┐" in result.stdout
+                or "┘" in result.stdout
+            )
             # Should have status indicators
             assert "✓" in result.stdout or "✗" in result.stdout
 

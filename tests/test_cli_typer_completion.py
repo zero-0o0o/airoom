@@ -1,6 +1,5 @@
 """Tests for the `airoom completion` Typer command."""
 
-import pytest
 from typer.testing import CliRunner
 
 from airoom.cli import app
@@ -50,4 +49,8 @@ class TestCompletionCommand:
         """Test completion command rejects invalid shell."""
         result = self.runner.invoke(app, ["completion", "invalid"])
         assert result.exit_code != 0
-        assert "bash" in result.stdout.lower() or "zsh" in result.stdout.lower() or "fish" in result.stdout.lower()
+        assert (
+            "bash" in result.stdout.lower()
+            or "zsh" in result.stdout.lower()
+            or "fish" in result.stdout.lower()
+        )

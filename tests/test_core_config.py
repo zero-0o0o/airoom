@@ -53,6 +53,7 @@ class TestConfigManager:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_init_with_project(self):

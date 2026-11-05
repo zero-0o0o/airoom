@@ -3,8 +3,6 @@
 Verifies that no filesystem writes occur when --dry-run is set.
 """
 
-import json
-import os
 import tempfile
 from pathlib import Path
 
@@ -12,7 +10,6 @@ import pytest
 from typer.testing import CliRunner
 
 from airoom.cli import app
-from airoom.core.project import Project
 
 
 @pytest.fixture
@@ -35,6 +32,7 @@ def temp_project(runner: CliRunner) -> Path:
 def _get_project_files(project_path: Path) -> dict[str, str]:
     """Get all files in the project with their content hashes for comparison."""
     import hashlib
+
     files = {}
     for file_path in project_path.rglob("*"):
         if file_path.is_file() and not file_path.name.startswith("."):
@@ -92,13 +90,20 @@ class TestRegistryDryRun:
         result = runner.invoke(
             app,
             [
-                "--dry-run", "--path", str(temp_project),
-                "registry", "add",
+                "--dry-run",
+                "--path",
+                str(temp_project),
+                "registry",
+                "add",
                 "test-artifact",
-                "--owner", "TestTool",
-                "--artifact-path", "airoom/artifacts/test.txt",
-                "--type", "file",
-                "--management", "managed",
+                "--owner",
+                "TestTool",
+                "--artifact-path",
+                "airoom/artifacts/test.txt",
+                "--type",
+                "file",
+                "--management",
+                "managed",
             ],
         )
         # Should succeed but not write
@@ -116,13 +121,19 @@ class TestRegistryDryRun:
         runner.invoke(
             app,
             [
-                "--path", str(temp_project),
-                "registry", "add",
+                "--path",
+                str(temp_project),
+                "registry",
+                "add",
                 "test-artifact-remove",
-                "--owner", "TestTool",
-                "--artifact-path", "airoom/artifacts/test2.txt",
-                "--type", "file",
-                "--management", "managed",
+                "--owner",
+                "TestTool",
+                "--artifact-path",
+                "airoom/artifacts/test2.txt",
+                "--type",
+                "file",
+                "--management",
+                "managed",
             ],
         )
 
@@ -130,8 +141,11 @@ class TestRegistryDryRun:
         result = runner.invoke(
             app,
             [
-                "--dry-run", "--path", str(temp_project),
-                "registry", "remove",
+                "--dry-run",
+                "--path",
+                str(temp_project),
+                "registry",
+                "remove",
                 "test-artifact-remove",
                 "--force",
             ],
@@ -156,24 +170,37 @@ class TestRegistryDryRun:
         runner.invoke(
             app,
             [
-                "--path", str(temp_project),
-                "registry", "add",
+                "--path",
+                str(temp_project),
+                "registry",
+                "add",
                 "test-artifact-show",
-                "--owner", "TestTool",
-                "--artifact-path", "airoom/artifacts/test3.txt",
-                "--type", "file",
-                "--management", "managed",
+                "--owner",
+                "TestTool",
+                "--artifact-path",
+                "airoom/artifacts/test3.txt",
+                "--type",
+                "file",
+                "--management",
+                "managed",
             ],
         )
 
         before = _get_project_files(temp_project)
-        result = runner.invoke(app, ["--dry-run", "--path", str(temp_project), "registry", "show", "test-artifact-show"])
+        result = runner.invoke(
+            app,
+            ["--dry-run", "--path", str(temp_project), "registry", "show", "test-artifact-show"],
+        )
         assert result.exit_code == 0, f"Registry show failed: {result.output}"
         _assert_no_changes(temp_project, before)
 
-    def test_registry_validate_dry_run_no_writes(self, runner: CliRunner, temp_project: Path) -> None:
+    def test_registry_validate_dry_run_no_writes(
+        self, runner: CliRunner, temp_project: Path
+    ) -> None:
         before = _get_project_files(temp_project)
-        result = runner.invoke(app, ["--dry-run", "--path", str(temp_project), "registry", "validate"])
+        result = runner.invoke(
+            app, ["--dry-run", "--path", str(temp_project), "registry", "validate"]
+        )
         assert result.exit_code == 0, f"Registry validate failed: {result.output}"
         _assert_no_changes(temp_project, before)
 
@@ -196,7 +223,9 @@ class TestOrganizeDryRun:
         result = runner.invoke(
             app,
             [
-                "--dry-run", "--path", str(temp_project),
+                "--dry-run",
+                "--path",
+                str(temp_project),
                 "organize",
                 "--non-interactive",
             ],
@@ -213,7 +242,9 @@ class TestOrganizeDryRun:
         result = runner.invoke(
             app,
             [
-                "--dry-run", "--path", str(temp_project),
+                "--dry-run",
+                "--path",
+                str(temp_project),
                 "organize",
                 "--non-interactive",
             ],
@@ -236,9 +267,13 @@ class TestConfigDryRun:
         result = runner.invoke(
             app,
             [
-                "--dry-run", "--path", str(temp_project),
-                "config", "set",
-                "defaults.test_key", "test_value",
+                "--dry-run",
+                "--path",
+                str(temp_project),
+                "config",
+                "set",
+                "defaults.test_key",
+                "test_value",
             ],
         )
         assert result.exit_code == 0, f"Config set failed: {result.output}"
@@ -255,9 +290,12 @@ class TestConfigDryRun:
         runner.invoke(
             app,
             [
-                "--path", str(temp_project),
-                "config", "set",
-                "defaults.test_unset", "test_value",
+                "--path",
+                str(temp_project),
+                "config",
+                "set",
+                "defaults.test_unset",
+                "test_value",
             ],
         )
 
@@ -265,8 +303,11 @@ class TestConfigDryRun:
         result = runner.invoke(
             app,
             [
-                "--dry-run", "--path", str(temp_project),
-                "config", "unset",
+                "--dry-run",
+                "--path",
+                str(temp_project),
+                "config",
+                "unset",
                 "defaults.test_unset",
             ],
         )

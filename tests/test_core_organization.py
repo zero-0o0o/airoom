@@ -7,8 +7,7 @@ import pytest
 
 from airoom.core.project import Project
 from airoom.core.registry import RegistryManager
-from airoom.core.discovery import DiscoveryEngine, DiscoveryReport
-from airoom.core.baseline import BaselineManager
+from airoom.core.discovery import DiscoveryEngine
 from airoom.core.organization import (
     RelocationAction,
     RelocationPlan,
@@ -67,7 +66,10 @@ class TestRelocationPlan:
             )
         ]
         tool_configs = {
-            "Graphify": {"output_path": "airoom/artifacts/graphify-out", "output_env": "GRAPHIFY_OUT"}
+            "Graphify": {
+                "output_path": "airoom/artifacts/graphify-out",
+                "output_env": "GRAPHIFY_OUT",
+            }
         }
         plan = RelocationPlan(actions=actions, tool_configs=tool_configs)
         assert len(plan.actions) == 1
@@ -92,6 +94,7 @@ class TestOrganizationEngine:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_init_with_dependencies(self):
@@ -124,7 +127,7 @@ class TestOrganizationEngine:
         # Create .claude directory (hardcoded, not relocatable)
         claude_dir = self.project_root / ".claude"
         claude_dir.mkdir()
-        (claude_dir / "settings.json").write_text('{}')
+        (claude_dir / "settings.json").write_text("{}")
 
         report = self.discovery.scan()
         plan = self.engine.plan(report)
@@ -215,7 +218,7 @@ class TestOrganizationEngine:
         """Test execute doesn't move external artifacts."""
         claude_dir = self.project_root / ".claude"
         claude_dir.mkdir()
-        (claude_dir / "settings.json").write_text('{}')
+        (claude_dir / "settings.json").write_text("{}")
 
         report = self.discovery.scan()
         plan = self.engine.plan(report)
@@ -397,10 +400,13 @@ class TestOrganizationEngine:
 
     def test_update_tool_config(self):
         """Test _update_tool_config adds tool entry to registry."""
-        self.engine._update_tool_config("TestTool", {
-            "output_path": "airoom/artifacts/test",
-            "output_env": "TEST_ENV",
-        })
+        self.engine._update_tool_config(
+            "TestTool",
+            {
+                "output_path": "airoom/artifacts/test",
+                "output_env": "TEST_ENV",
+            },
+        )
 
         data = self.manager.read()
         assert "TestTool" in data["tools"]
@@ -446,7 +452,7 @@ class TestOrganizationEngine:
         """Test _register_artifact for external management."""
         source = self.project_root / ".claude"
         source.mkdir()
-        (source / "settings.json").write_text('{}')
+        (source / "settings.json").write_text("{}")
 
         action = RelocationAction(
             source=source,
@@ -635,7 +641,10 @@ class TestOrganizationEngine:
         assert isinstance(messages, list)
         assert len(messages) > 0
         # Should have success message
-        assert any("moved" in m.lower() or "registered" in m.lower() or "organized" in m.lower() for m in messages)
+        assert any(
+            "moved" in m.lower() or "registered" in m.lower() or "organized" in m.lower()
+            for m in messages
+        )
 
 
 if __name__ == "__main__":

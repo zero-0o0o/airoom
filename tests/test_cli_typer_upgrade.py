@@ -2,7 +2,6 @@
 
 import json
 import subprocess
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -313,7 +312,9 @@ class TestVerifyInstallation:
 class TestTyperUpgradeCommand:
     """Integration tests for the Typer upgrade command."""
 
-    def run_upgrade(self, args: list[str] | None = None, global_args: list[str] | None = None) -> tuple[int, str]:
+    def run_upgrade(
+        self, args: list[str] | None = None, global_args: list[str] | None = None
+    ) -> tuple[int, str]:
         """Run upgrade command."""
         runner = CliRunner()
         cmd = []
@@ -461,7 +462,9 @@ class TestTyperUpgradeCommand:
     @patch("airoom.commands_typer.upgrade.is_installed_via_pipx")
     @patch("airoom.commands_typer.upgrade.fetch_latest_release")
     @patch("urllib.request.urlopen")
-    def test_upgrade_version_not_found(self, mock_urlopen, mock_fetch, mock_pipx_check, mock_pipx_path):
+    def test_upgrade_version_not_found(
+        self, mock_urlopen, mock_fetch, mock_pipx_check, mock_pipx_path
+    ):
         """Test upgrade with non-existent version."""
         mock_pipx_path.return_value = "/usr/local/bin/pipx"
         mock_pipx_check.return_value = True

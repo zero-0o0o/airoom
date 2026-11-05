@@ -49,6 +49,7 @@ class TestFindProjectRoot:
             original_cwd = Path.cwd()
             try:
                 import os
+
                 os.chdir(tmpdir)
                 root = find_project_root()
                 assert root == Path(tmpdir).resolve()
@@ -92,6 +93,7 @@ class TestAssertSafeProjectPath:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_safe_path_within_project(self):
@@ -125,15 +127,15 @@ class TestAssertSafeProjectPath:
         # Create a real directory outside the project
         outside_dir = Path("/tmp") / f"airoom-outside-{id(self)}"
         outside_dir.mkdir(exist_ok=True)
-        
+
         # Create a symlink inside the project pointing outside
         link_path = self.project_root / "airoom" / "external-link"
         self.project_root.joinpath("airoom").mkdir(parents=True, exist_ok=True)
         link_path.symlink_to(outside_dir, target_is_directory=True)
-        
+
         with pytest.raises(ValueError, match="Refusing to follow symlink"):
             assert_safe_project_path(self.project_root, link_path / "SKILL.md")
-        
+
         # Cleanup
         link_path.unlink()
         outside_dir.rmdir()
@@ -145,16 +147,16 @@ class TestAssertSafeProjectPath:
         outside_dir.mkdir(exist_ok=True)
         target_file = outside_dir / "target.txt"
         target_file.write_text("target")
-        
+
         # Create a symlink inside the project pointing to the outside file
         self.project_root.joinpath("airoom").mkdir(parents=True, exist_ok=True)
         link_path = self.project_root / "airoom" / "link-to-outside.txt"
         link_path.symlink_to(target_file)
-        
+
         # The symlink itself is detected first, so we get the symlink error
         with pytest.raises(ValueError, match="Refusing to follow symlink"):
             assert_safe_project_path(self.project_root, link_path)
-        
+
         # Cleanup
         link_path.unlink()
         target_file.unlink()
@@ -178,6 +180,7 @@ class TestProjectAssertSafe:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_assert_safe_delegates_to_standalone_function(self):
@@ -195,14 +198,14 @@ class TestProjectAssertSafe:
         """Test that Project.assert_safe rejects symlinks."""
         outside_dir = Path("/tmp") / f"airoom-outside-{id(self)}"
         outside_dir.mkdir(exist_ok=True)
-        
+
         link_path = self.project_root / "airoom" / "external-link"
         self.project_root.joinpath("airoom").mkdir(parents=True, exist_ok=True)
         link_path.symlink_to(outside_dir, target_is_directory=True)
-        
+
         with pytest.raises(ValueError, match="Refusing to follow symlink"):
             self.project.assert_safe(link_path / "SKILL.md")
-        
+
         link_path.unlink()
         outside_dir.rmdir()
 

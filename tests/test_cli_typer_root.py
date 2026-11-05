@@ -1,9 +1,7 @@
 """Tests for Typer CLI root entry point and global options."""
 
-import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from typer.testing import CliRunner
@@ -64,7 +62,9 @@ class TestTyperApp:
     def test_global_options_stored_in_context(self):
         """Test that global options are stored in ctx.obj."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = self.runner.invoke(app, ["--path", tmpdir, "--verbose", "--json", "--dry-run", "init"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "--verbose", "--json", "--dry-run", "init"]
+            )
             assert result.exit_code in (0, 1)
 
     def test_init_command_registered(self):

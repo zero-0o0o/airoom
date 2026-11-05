@@ -114,7 +114,9 @@ def _prompt_for_action(candidate) -> str:
     return action
 
 
-def _build_plan_from_interactive(project: Project, registry: RegistryManager, discovery_report, json_output: bool) -> tuple:
+def _build_plan_from_interactive(
+    project: Project, registry: RegistryManager, discovery_report, json_output: bool
+) -> tuple:
     """Build a relocation plan interactively by prompting for each candidate."""
     from airoom.core.organization import RelocationAction, RelocationPlan
 
@@ -200,7 +202,10 @@ def organize(
     ] = None,
     interactive: Annotated[
         bool,
-        typer.Option("--interactive/--non-interactive", help="Prompt for each candidate (default: interactive)"),
+        typer.Option(
+            "--interactive/--non-interactive",
+            help="Prompt for each candidate (default: interactive)",
+        ),
     ] = True,
     dry_run: Annotated[
         bool,
@@ -227,10 +232,7 @@ def organize(
     if not project.airoom_dir.exists():
         error_msg = f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
         if json_output:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": error_msg
-            }, indent=2))
+            print(json.dumps({"error": "Project not initialized", "details": error_msg}, indent=2))
         else:
             console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
             console.print("Run 'airoom init' to initialize AIroom in this project.")
@@ -252,11 +254,19 @@ def organize(
 
     if not discovery_report.unregistered_candidates:
         if json_output:
-            print(json.dumps({
-                "success": True,
-                "plan": {"actions": [], "tool_configs": {}},
-                "result": {"success": True, "messages": ["No unregistered candidates found. Nothing to organize."]},
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "success": True,
+                        "plan": {"actions": [], "tool_configs": {}},
+                        "result": {
+                            "success": True,
+                            "messages": ["No unregistered candidates found. Nothing to organize."],
+                        },
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print("[green]No unregistered candidates found. Nothing to organize.[/green]")
         return
@@ -266,18 +276,28 @@ def organize(
 
     if interactive:
         # Interactive mode: prompt for each candidate
-        plan = _build_plan_from_interactive(project, registry_manager, discovery_report, json_output)
+        plan = _build_plan_from_interactive(
+            project, registry_manager, discovery_report, json_output
+        )
     else:
         # Non-interactive mode: use defaults (managed if feasible, else external)
         plan = org_engine.plan(discovery_report)
 
     if not plan.actions:
         if json_output:
-            print(json.dumps({
-                "success": True,
-                "plan": {"actions": [], "tool_configs": {}},
-                "result": {"success": True, "messages": ["No actions to perform after filtering."]},
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "success": True,
+                        "plan": {"actions": [], "tool_configs": {}},
+                        "result": {
+                            "success": True,
+                            "messages": ["No actions to perform after filtering."],
+                        },
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print("[yellow]No actions to perform after filtering.[/yellow]")
         return

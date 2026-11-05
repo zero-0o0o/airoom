@@ -47,14 +47,17 @@ class TestConfigCommand:
             self._init_project(tmpdir)
             # Write a config file
             config_file = Path(tmpdir) / "airoom.config.yaml"
-            config_file.write_text("""skips:
+            config_file.write_text(
+                """skips:
   - artifact-organization
 defaults:
   registry_management: external
   dry_run: true
 dry_run: true
 verbose: 1
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
             result = self.runner.invoke(app, ["--path", tmpdir, "config", "show"])
             assert result.exit_code == 0
@@ -85,13 +88,16 @@ verbose: 1
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
             config_file = Path(tmpdir) / "airoom.config.yaml"
-            config_file.write_text("""skips:
+            config_file.write_text(
+                """skips:
   - artifact-organization
 defaults:
   registry_management: external
 dry_run: true
 verbose: 2
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
             result = self.runner.invoke(app, ["--path", tmpdir, "config", "show", "--json"])
             assert result.exit_code == 0
@@ -144,7 +150,9 @@ verbose: 2
         """Test setting a nested key using dot notation."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "set", "defaults.registry_management", "external"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "set", "defaults.registry_management", "external"]
+            )
             assert result.exit_code == 0
 
             # Verify config was written
@@ -158,7 +166,9 @@ verbose: 2
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
             # "registry_management" is not a top-level key, should go under defaults
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "set", "registry_management", "external"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "set", "registry_management", "external"]
+            )
             assert result.exit_code == 0
 
             config_file = Path(tmpdir) / "airoom.config.yaml"
@@ -186,11 +196,16 @@ verbose: 2
             self._init_project(tmpdir)
             # Pre-write config
             config_file = Path(tmpdir) / "airoom.config.yaml"
-            config_file.write_text("""defaults:
+            config_file.write_text(
+                """defaults:
   registry_management: managed
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "set", "defaults.registry_management", "external"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "set", "defaults.registry_management", "external"]
+            )
             assert result.exit_code == 0
 
             content = config_file.read_text(encoding="utf-8")
@@ -201,7 +216,9 @@ verbose: 2
         """Test config set with --json flag."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "set", "dry_run", "true", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "set", "dry_run", "true", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["status"] == "ok" or "dry_run" in str(data)
@@ -238,9 +255,12 @@ verbose: 2
             self._init_project(tmpdir)
             # Pre-write config
             config_file = Path(tmpdir) / "airoom.config.yaml"
-            config_file.write_text("""dry_run: true
+            config_file.write_text(
+                """dry_run: true
 verbose: 2
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
             result = self.runner.invoke(app, ["--path", tmpdir, "config", "unset", "dry_run"])
             assert result.exit_code == 0
@@ -257,12 +277,17 @@ verbose: 2
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
             config_file = Path(tmpdir) / "airoom.config.yaml"
-            config_file.write_text("""defaults:
+            config_file.write_text(
+                """defaults:
   registry_management: external
   dry_run: true
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "unset", "defaults.registry_management"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "unset", "defaults.registry_management"]
+            )
             assert result.exit_code == 0
 
             content = config_file.read_text(encoding="utf-8")
@@ -274,12 +299,17 @@ verbose: 2
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
             config_file = Path(tmpdir) / "airoom.config.yaml"
-            config_file.write_text("""defaults:
+            config_file.write_text(
+                """defaults:
   registry_management: external
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
             # "registry_management" is not a top-level key
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "unset", "registry_management"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "unset", "registry_management"]
+            )
             assert result.exit_code == 0
 
             content = config_file.read_text(encoding="utf-8")
@@ -290,10 +320,13 @@ verbose: 2
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
             config_file = Path(tmpdir) / "airoom.config.yaml"
-            config_file.write_text("""defaults:
+            config_file.write_text(
+                """defaults:
   a:
     b: value
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
             result = self.runner.invoke(app, ["--path", tmpdir, "config", "unset", "defaults.a.b"])
             assert result.exit_code == 0
@@ -310,7 +343,9 @@ verbose: 2
             result = self.runner.invoke(app, ["--path", tmpdir, "config", "unset", "nonexistent"])
             assert result.exit_code == 0
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "unset", "defaults.nonexistent"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "unset", "defaults.nonexistent"]
+            )
             assert result.exit_code == 0
 
     def test_config_unset_json_output(self):
@@ -320,7 +355,9 @@ verbose: 2
             config_file = Path(tmpdir) / "airoom.config.yaml"
             config_file.write_text("dry_run: true\n", encoding="utf-8")
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "config", "unset", "dry_run", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "config", "unset", "dry_run", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["status"] == "ok" or "dry_run" in str(data)
@@ -344,7 +381,10 @@ verbose: 2
                 cmd = ["--path", tmpdir, "config"] + subcmd.split()
                 result = self.runner.invoke(app, cmd)
                 assert result.exit_code != 0
-                assert "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+                assert (
+                    "not initialized" in result.stdout.lower()
+                    or "not found" in result.stdout.lower()
+                )
 
     # =========================================================================
     # Defaults merging / roundtrip
@@ -356,8 +396,12 @@ verbose: 2
             self._init_project(tmpdir)
 
             # Set multiple values
-            self.runner.invoke(app, ["--path", tmpdir, "config", "set", "skips", '["artifact-organization"]'])
-            self.runner.invoke(app, ["--path", tmpdir, "config", "set", "defaults.registry_management", "external"])
+            self.runner.invoke(
+                app, ["--path", tmpdir, "config", "set", "skips", '["artifact-organization"]']
+            )
+            self.runner.invoke(
+                app, ["--path", tmpdir, "config", "set", "defaults.registry_management", "external"]
+            )
             self.runner.invoke(app, ["--path", tmpdir, "config", "set", "dry_run", "true"])
             self.runner.invoke(app, ["--path", tmpdir, "config", "set", "verbose", "2"])
 
@@ -377,7 +421,7 @@ verbose: 2
 
             # Set a value
             self.runner.invoke(app, ["--path", tmpdir, "config", "set", "dry_run", "true"])
-            
+
             # Verify it's set
             result = self.runner.invoke(app, ["--path", tmpdir, "config", "show", "--json"])
             data = json.loads(result.stdout)

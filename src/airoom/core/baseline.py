@@ -6,10 +6,8 @@ commands/update.py to provide a shared, reusable core module.
 """
 
 import json
-from pathlib import Path
-from typing import Any
 
-from airoom.core.atomic import atomic_write, compute_file_hash
+from airoom.core.atomic import atomic_write
 from airoom.core.project import Project
 
 
@@ -52,7 +50,9 @@ class BaselineManager:
         if not isinstance(baseline, dict):
             raise ValueError("baseline must be a dictionary")
 
-        if not all(isinstance(key, str) and isinstance(value, str) for key, value in baseline.items()):
+        if not all(
+            isinstance(key, str) and isinstance(value, str) for key, value in baseline.items()
+        ):
             raise ValueError("baseline must map resource paths to SHA-256 hashes")
 
         return baseline

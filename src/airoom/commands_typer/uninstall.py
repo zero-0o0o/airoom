@@ -4,14 +4,12 @@ import json
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
 
-from airoom import __version__
-from airoom.core.logging import configure_logging, get_logger
+from airoom.core.logging import get_logger
 from airoom.core.types import GlobalOptions
 from airoom.core.version import get_installed_version
 
@@ -168,7 +166,9 @@ def uninstall(
 
     if not is_installed_via_pipx():
         if json_output:
-            _output_json("error", "AIroom does not appear to be installed via pipx", installed_version)
+            _output_json(
+                "error", "AIroom does not appear to be installed via pipx", installed_version
+            )
         else:
             console.print("[red]Error:[/red] AIroom does not appear to be installed via pipx")
             console.print("Cannot verify installation method. Aborting for safety.")
@@ -187,9 +187,15 @@ def uninstall(
     if not yes:
         if not is_interactive():
             if json_output:
-                _output_json("cancelled", "Running in non-interactive mode without --yes flag", installed_version)
+                _output_json(
+                    "cancelled",
+                    "Running in non-interactive mode without --yes flag",
+                    installed_version,
+                )
             else:
-                console.print("[red]Error:[/red] Running in non-interactive mode without --yes flag.")
+                console.print(
+                    "[red]Error:[/red] Running in non-interactive mode without --yes flag."
+                )
                 console.print("Use 'airoom uninstall --yes' to skip confirmation.")
             raise typer.Exit(2)
 
@@ -221,15 +227,21 @@ def uninstall(
             console.print("[green]AIroom has been successfully uninstalled.[/green]")
     else:
         if json_output:
-            _output_json("error", "AIroom may still be installed. Please verify manually.", installed_version)
+            _output_json(
+                "error", "AIroom may still be installed. Please verify manually.", installed_version
+            )
         else:
-            console.print("[yellow]Warning:[/yellow] AIroom may still be installed. Please verify manually.")
+            console.print(
+                "[yellow]Warning:[/yellow] AIroom may still be installed. Please verify manually."
+            )
         raise typer.Exit(1)
 
     raise typer.Exit(0)
 
 
-uninstall_app = typer.Typer(name="uninstall", help="Uninstall the global CLI", invoke_without_command=True)
+uninstall_app = typer.Typer(
+    name="uninstall", help="Uninstall the global CLI", invoke_without_command=True
+)
 uninstall_app.callback()(uninstall)
 
 

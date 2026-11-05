@@ -8,7 +8,7 @@ class ResourceManager:
 
     def __init__(self) -> None:
         """Initialize the resource manager.
-        
+
         Resources are located in the airoom package's resources directory.
         """
         # Resources are in the airoom package directory
@@ -17,10 +17,10 @@ class ResourceManager:
 
     def get_resource_path(self, relative_path: str) -> Path:
         """Get the path to a packaged resource.
-        
+
         Args:
             relative_path: Path relative to the resources directory.
-            
+
         Returns:
             Path to the resource (may not exist).
         """
@@ -28,13 +28,13 @@ class ResourceManager:
 
     def read_resource(self, relative_path: str) -> str:
         """Read a packaged resource file.
-        
+
         Args:
             relative_path: Path relative to the resources directory.
-            
+
         Returns:
             Content of the resource file as string.
-            
+
         Raises:
             FileNotFoundError: If the resource does not exist.
         """
@@ -43,7 +43,7 @@ class ResourceManager:
 
     def list_packaged_skills(self) -> list[str]:
         """List all skill names packaged with AIroom.
-        
+
         Returns:
             Sorted list of skill directory names.
         """
@@ -54,7 +54,7 @@ class ResourceManager:
 
     def list_packaged_templates(self) -> list[str]:
         """List all template names packaged with AIroom.
-        
+
         Returns:
             Sorted list of template file names.
         """

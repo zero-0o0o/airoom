@@ -13,9 +13,7 @@ from typer.testing import CliRunner
 
 from airoom.cli import app
 from airoom.commands_typer.init import AIROOM_START, AIROOM_END
-from airoom.core.project import Project
-from airoom.core.baseline import BaselineManager, compute_file_hash_from_bytes
-from airoom.core.version import read_version_file
+from airoom.core.baseline import compute_file_hash_from_bytes
 
 
 class TestTyperUpdateCommand:
@@ -212,8 +210,8 @@ class TestTyperUpdateCommand:
             if start != -1 and end > start:
                 modified_content = (
                     content[:start]
-                    + content[start:end + len(AIROOM_END)].replace("AIroom", "Modified AIroom")
-                    + content[end + len(AIROOM_END):]
+                    + content[start : end + len(AIROOM_END)].replace("AIroom", "Modified AIroom")
+                    + content[end + len(AIROOM_END) :]
                 )
                 agents_path.write_text(modified_content)
 
@@ -401,7 +399,9 @@ class TestTyperUpdateCommand:
             baseline = json.loads(baseline_path.read_text())
             assert "skills/artifact-discovery/SKILL.md" in baseline
             # Hash should match the installed skill
-            installed_content = (project_path / "airoom" / "skills" / "artifact-discovery" / "SKILL.md").read_bytes()
+            installed_content = (
+                project_path / "airoom" / "skills" / "artifact-discovery" / "SKILL.md"
+            ).read_bytes()
             expected_hash = compute_file_hash_from_bytes(installed_content)
             assert baseline["skills/artifact-discovery/SKILL.md"] == expected_hash
 

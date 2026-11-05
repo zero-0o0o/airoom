@@ -1,6 +1,5 @@
 """Tests for airoom init command (Typer-based)."""
 
-import os
 import tempfile
 from pathlib import Path
 

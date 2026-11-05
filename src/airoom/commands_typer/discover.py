@@ -14,7 +14,9 @@ from airoom.core.registry import RegistryManager
 
 console = Console()
 
-discover_app = typer.Typer(name="discover", help="Discover AI artifacts and registry discrepancies.")
+discover_app = typer.Typer(
+    name="discover", help="Discover AI artifacts and registry discrepancies."
+)
 
 
 def _get_project(ctx: typer.Context, path: Optional[Path] = None) -> Project:
@@ -126,9 +128,7 @@ def _render_json(report) -> None:
             }
             for c in report.unregistered_candidates
         ],
-        "discrepancies": [
-            {"kind": d.kind, "details": d.details} for d in report.discrepancies
-        ],
+        "discrepancies": [{"kind": d.kind, "details": d.details} for d in report.discrepancies],
         "recommendations": report.recommendations,
     }
     print(json.dumps(output, indent=2))
@@ -159,12 +159,19 @@ def discover(
     # Validate type filter
     if type not in ("graphify", "superpowers", "all"):
         if json_output:
-            print(json.dumps({
-                "error": "Invalid type filter",
-                "details": f"Unknown type filter: {type}. Must be one of: graphify, superpowers, all"
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Invalid type filter",
+                        "details": f"Unknown type filter: {type}. Must be one of: graphify, superpowers, all",
+                    },
+                    indent=2,
+                )
+            )
         else:
-            console.print(f"[red]Error:[/red] Unknown type filter: {type}. Must be one of: graphify, superpowers, all")
+            console.print(
+                f"[red]Error:[/red] Unknown type filter: {type}. Must be one of: graphify, superpowers, all"
+            )
         raise typer.Exit(1)
 
     project = _get_project(ctx, path)
@@ -172,10 +179,15 @@ def discover(
     # Verify project has been initialized
     if not project.airoom_dir.exists():
         if json_output:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Project not initialized",
+                        "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first.",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
             console.print("Run 'airoom init' to initialize AIroom in this project.")
@@ -187,7 +199,9 @@ def discover(
     report = engine.scan()
 
     # Filter candidates by type
-    report.unregistered_candidates = _filter_candidates_by_type(report.unregistered_candidates, type)
+    report.unregistered_candidates = _filter_candidates_by_type(
+        report.unregistered_candidates, type
+    )
 
     if json_output:
         _render_json(report)

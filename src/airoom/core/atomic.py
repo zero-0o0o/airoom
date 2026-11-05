@@ -15,6 +15,7 @@ from pathlib import Path
 
 class AtomicWriteError(Exception):
     """Raised when atomic write detects concurrent modification or creation."""
+
     pass
 
 

@@ -1,7 +1,6 @@
 """AIroom doctor command implementation (Typer-based)."""
 
 import json
-import shutil
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -9,13 +8,10 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from airoom import __version__
 from airoom.commands_typer.init import AIROOM_START, AIROOM_END
-from airoom.core.atomic import atomic_write, compute_file_hash, AtomicWriteError
 from airoom.core.baseline import BaselineManager, compute_file_hash_from_bytes
-from airoom.core.discovery import DiscoveryEngine
 from airoom.core.project import Project
-from airoom.core.registry import RegistryManager, parse_registry, dump_registry, RegistryError
+from airoom.core.registry import RegistryManager, parse_registry
 from airoom.core.resources import ResourceManager
 from airoom.core.version import get_installed_version, write_version_file
 
@@ -40,40 +36,36 @@ def _check_version(project: Project, fix: bool = False, dry_run: bool = False) -
     """Check version consistency between installed and project."""
     installed_version = get_installed_version()
     version_path = project.version_path
-    
+
     if not version_path.exists():
         if fix and not dry_run:
             try:
                 write_version_file(version_path, installed_version)
                 return {
                     "status": "ok",
-                    "details": f"Recreated .airoom-version with version {installed_version}"
+                    "details": f"Recreated .airoom-version with version {installed_version}",
                 }
             except Exception as e:
-                return {
-                    "status": "error",
-                    "details": f"Failed to recreate version file: {e}"
-                }
+                return {"status": "error", "details": f"Failed to recreate version file: {e}"}
         return {
             "status": "missing",
-            "details": "Project version file (.airoom-version) not found. Run 'airoom init' or 'airoom doctor --fix' to recreate."
+            "details": "Project version file (.airoom-version) not found. Run 'airoom init' or 'airoom doctor --fix' to recreate.",
         }
-    
+
     project_version = version_path.read_text(encoding="utf-8").strip()
-    
+
     if installed_version == project_version:
-        return {
-            "status": "ok",
-            "details": f"Version {installed_version} (match)"
-        }
+        return {"status": "ok", "details": f"Version {installed_version} (match)"}
     else:
         return {
             "status": "mismatch",
-            "details": f"Installed: {installed_version}, Project: {project_version}"
+            "details": f"Installed: {installed_version}, Project: {project_version}",
         }
 
 
-def _check_baseline(project: Project, baseline_manager: BaselineManager, fix: bool = False, dry_run: bool = False) -> dict:
+def _check_baseline(
+    project: Project, baseline_manager: BaselineManager, fix: bool = False, dry_run: bool = False
+) -> dict:
     """Verify baseline integrity - all tracked resources match their hashes."""
     # Check if baseline file exists
     if not project.baseline_path.exists():
@@ -82,26 +74,20 @@ def _check_baseline(project: Project, baseline_manager: BaselineManager, fix: bo
                 _recreate_baseline(project, baseline_manager)
                 return {
                     "status": "ok",
-                    "details": "Recreated missing .airoom-baseline.json from current resources"
+                    "details": "Recreated missing .airoom-baseline.json from current resources",
                 }
             except Exception as e:
-                return {
-                    "status": "error",
-                    "details": f"Failed to recreate baseline: {e}"
-                }
+                return {"status": "error", "details": f"Failed to recreate baseline: {e}"}
         return {
             "status": "missing",
-            "details": "Baseline file (.airoom-baseline.json) not found. Run 'airoom doctor --fix' to recreate."
+            "details": "Baseline file (.airoom-baseline.json) not found. Run 'airoom doctor --fix' to recreate.",
         }
-    
+
     try:
         baseline = baseline_manager.read()
     except Exception as e:
-        return {
-            "status": "error",
-            "details": f"Failed to read baseline: {e}"
-        }
-    
+        return {"status": "error", "details": f"Failed to read baseline: {e}"}
+
     if not baseline:
         # Empty baseline - if fix, recreate from current state
         if fix and not dry_run:
@@ -109,21 +95,15 @@ def _check_baseline(project: Project, baseline_manager: BaselineManager, fix: bo
                 _recreate_baseline(project, baseline_manager)
                 return {
                     "status": "ok",
-                    "details": "Recreated empty baseline from current resources"
+                    "details": "Recreated empty baseline from current resources",
                 }
             except Exception as e:
-                return {
-                    "status": "error",
-                    "details": f"Failed to recreate baseline: {e}"
-                }
-        return {
-            "status": "ok",
-            "details": "No baseline entries (empty baseline)"
-        }
-    
+                return {"status": "error", "details": f"Failed to recreate baseline: {e}"}
+        return {"status": "ok", "details": "No baseline entries (empty baseline)"}
+
     mismatches = []
     missing_files = []
-    
+
     for relpath, expected_hash in baseline.items():
         # Handle special AGENTS.md section entry
         if relpath == "AGENTS.md#airoom-section":
@@ -138,7 +118,7 @@ def _check_baseline(project: Project, baseline_manager: BaselineManager, fix: bo
             if start_idx == -1 or end_idx == -1 or end_idx < start_idx:
                 missing_files.append(relpath)
                 continue
-            section = content[start_idx:end_idx + len(AIROOM_END)]
+            section = content[start_idx : end_idx + len(AIROOM_END)]
             actual_content = section.encode("utf-8")
         else:
             # Baseline paths are relative to the airoom directory
@@ -147,11 +127,11 @@ def _check_baseline(project: Project, baseline_manager: BaselineManager, fix: bo
                 missing_files.append(relpath)
                 continue
             actual_content = file_path.read_bytes()
-        
+
         actual_hash = compute_file_hash_from_bytes(actual_content)
         if actual_hash != expected_hash:
             mismatches.append(relpath)
-    
+
     if missing_files:
         # Missing files tracked in baseline
         if fix and not dry_run:
@@ -159,38 +139,26 @@ def _check_baseline(project: Project, baseline_manager: BaselineManager, fix: bo
                 _recreate_baseline(project, baseline_manager)
                 return {
                     "status": "ok",
-                    "details": f"Recreated baseline after {len(missing_files)} missing file(s)"
+                    "details": f"Recreated baseline after {len(missing_files)} missing file(s)",
                 }
             except Exception as e:
-                return {
-                    "status": "error",
-                    "details": f"Failed to recreate baseline: {e}"
-                }
+                return {"status": "error", "details": f"Failed to recreate baseline: {e}"}
         details = f"Missing tracked files: {', '.join(missing_files)}"
-        return {
-            "status": "missing",
-            "details": details
-        }
-    
+        return {"status": "missing", "details": details}
+
     if mismatches:
         # User-modified files - DO NOT auto-fix
         details = f"Modified (user changes preserved): {', '.join(mismatches)}"
-        return {
-            "status": "mismatch",
-            "details": details
-        }
-    
-    return {
-        "status": "ok",
-        "details": f"All {len(baseline)} tracked resources verified"
-    }
+        return {"status": "mismatch", "details": details}
+
+    return {"status": "ok", "details": f"All {len(baseline)} tracked resources verified"}
 
 
 def _recreate_baseline(project: Project, baseline_manager: BaselineManager) -> None:
     """Recreate baseline from current state of installed resources."""
     baseline = {}
     resource_manager = ResourceManager()
-    
+
     # Skills
     for skill_name in resource_manager.list_packaged_skills():
         relpath = f"skills/{skill_name}/SKILL.md"
@@ -198,14 +166,14 @@ def _recreate_baseline(project: Project, baseline_manager: BaselineManager) -> N
         bundled = resource_manager.get_resource_path(relpath)
         if installed.is_file() and installed.read_bytes() == bundled.read_bytes():
             baseline[relpath] = compute_file_hash_from_bytes(installed.read_bytes())
-    
+
     # AIROOM.md
     for relpath in ("AIROOM.md",):
         installed = project.airoom_dir / relpath
         bundled = resource_manager.get_resource_path("templates/" + relpath)
         if installed.is_file() and installed.read_bytes() == bundled.read_bytes():
             baseline[relpath] = compute_file_hash_from_bytes(installed.read_bytes())
-    
+
     # AGENTS.md section
     agents_path = project.root / "AGENTS.md"
     if agents_path.exists():
@@ -213,24 +181,25 @@ def _recreate_baseline(project: Project, baseline_manager: BaselineManager) -> N
         start_idx = content.find(AIROOM_START)
         end_idx = content.find(AIROOM_END)
         if start_idx != -1 and end_idx > start_idx:
-            section = content[start_idx:end_idx + len(AIROOM_END)]
+            section = content[start_idx : end_idx + len(AIROOM_END)]
             bundled_section = resource_manager.read_resource("templates/AGENTS.md").strip()
             if section.strip() == bundled_section:
-                baseline["AGENTS.md#airoom-section"] = compute_file_hash_from_bytes(section.encode("utf-8"))
-    
+                baseline["AGENTS.md#airoom-section"] = compute_file_hash_from_bytes(
+                    section.encode("utf-8")
+                )
+
     baseline_manager.write(baseline)
 
 
-def _check_registry(project: Project, registry_manager: RegistryManager, fix: bool = False, dry_run: bool = False) -> dict:
+def _check_registry(
+    project: Project, registry_manager: RegistryManager, fix: bool = False, dry_run: bool = False
+) -> dict:
     """Validate registry schema and file existence."""
     try:
         is_valid, errors = registry_manager.validate()
     except Exception as e:
-        return {
-            "status": "error",
-            "details": f"Registry validation failed: {e}"
-        }
-    
+        return {"status": "error", "details": f"Registry validation failed: {e}"}
+
     if not is_valid:
         if fix and not dry_run:
             try:
@@ -241,22 +210,13 @@ def _check_registry(project: Project, registry_manager: RegistryManager, fix: bo
                 registry_manager.write(template_data)
                 return {
                     "status": "ok",
-                    "details": "Recreated registry from template (invalid entries removed)"
+                    "details": "Recreated registry from template (invalid entries removed)",
                 }
             except Exception as e:
-                return {
-                    "status": "error",
-                    "details": f"Failed to fix registry: {e}"
-                }
-        return {
-            "status": "invalid",
-            "details": "; ".join(errors)
-        }
-    
-    return {
-        "status": "ok",
-        "details": "Registry schema valid"
-    }
+                return {"status": "error", "details": f"Failed to fix registry: {e}"}
+        return {"status": "invalid", "details": "; ".join(errors)}
+
+    return {"status": "ok", "details": "Registry schema valid"}
 
 
 def _check_artifacts(project: Project, registry_manager: RegistryManager) -> dict:
@@ -264,18 +224,12 @@ def _check_artifacts(project: Project, registry_manager: RegistryManager) -> dic
     try:
         registry = registry_manager.read()
     except Exception as e:
-        return {
-            "status": "error",
-            "details": f"Failed to read registry: {e}"
-        }
-    
+        return {"status": "error", "details": f"Failed to read registry: {e}"}
+
     artifacts = registry.get("artifacts", {})
     if not artifacts:
-        return {
-            "status": "ok",
-            "details": "No artifacts registered"
-        }
-    
+        return {"status": "ok", "details": "No artifacts registered"}
+
     missing = []
     for artifact_id, entry in artifacts.items():
         if entry.get("status") != "active":
@@ -284,34 +238,25 @@ def _check_artifacts(project: Project, registry_manager: RegistryManager) -> dic
         if not path:
             missing.append(f"{artifact_id}: no path")
             continue
-        
+
         full_path = project.root / path
         if not full_path.exists():
             missing.append(f"{artifact_id} ({path})")
-    
+
     if missing:
-        return {
-            "status": "missing",
-            "details": f"Missing artifacts: {', '.join(missing)}"
-        }
-    
+        return {"status": "missing", "details": f"Missing artifacts: {', '.join(missing)}"}
+
     active_count = len([a for a in artifacts.values() if a.get("status") == "active"])
-    return {
-        "status": "ok",
-        "details": f"All {active_count} active artifacts present"
-    }
+    return {"status": "ok", "details": f"All {active_count} active artifacts present"}
 
 
 def _check_symlinks(project: Project) -> dict:
     """Check for symlinks in the airoom directory."""
     if not project.airoom_dir.exists():
-        return {
-            "status": "ok",
-            "details": "AIroom directory does not exist"
-        }
-    
+        return {"status": "ok", "details": "AIroom directory does not exist"}
+
     symlinks = []
-    
+
     def check_symlinks_recursive(path: Path):
         try:
             for entry in path.iterdir():
@@ -322,91 +267,73 @@ def _check_symlinks(project: Project) -> dict:
                     check_symlinks_recursive(entry)
         except (PermissionError, OSError):
             pass
-    
+
     check_symlinks_recursive(project.airoom_dir)
-    
+
     if symlinks:
-        return {
-            "status": "found",
-            "details": f"Symlinks found: {', '.join(symlinks)}"
-        }
-    
-    return {
-        "status": "ok",
-        "details": "No symlinks in airoom/ directory"
-    }
+        return {"status": "found", "details": f"Symlinks found: {', '.join(symlinks)}"}
+
+    return {"status": "ok", "details": "No symlinks in airoom/ directory"}
 
 
 def _check_boundary(project: Project, registry_manager: RegistryManager) -> dict:
     """Check for path boundary violations in registry."""
     # Read raw registry without validation to catch boundary violations
     from ruamel.yaml import YAML
+
     def _yaml() -> YAML:
         yaml = YAML()
         yaml.preserve_quotes = True
         yaml.indent(mapping=2, sequence=4, offset=2)
         return yaml
-    
+
     if not registry_manager.registry_path.exists():
-        return {
-            "status": "ok",
-            "details": "No registry file"
-        }
-    
+        return {"status": "ok", "details": "No registry file"}
+
     try:
         text = registry_manager.registry_path.read_text(encoding="utf-8")
         registry = _yaml().load(text) or {"version": 1, "artifacts": {}, "tools": {}}
     except Exception as e:
-        return {
-            "status": "error",
-            "details": f"Failed to read registry: {e}"
-        }
-    
+        return {"status": "error", "details": f"Failed to read registry: {e}"}
+
     violations = []
     artifacts = registry.get("artifacts", {})
-    
+
     for artifact_id, entry in artifacts.items():
         path = entry.get("path", "")
         if not path:
             continue
-        
+
         # Check for absolute paths
         if path.startswith("/") or "\\" in path:
             violations.append(f"{artifact_id}: absolute or Windows-style path '{path}'")
             continue
-        
+
         # Check for directory traversal
         if ".." in Path(path).parts:
             violations.append(f"{artifact_id}: path traversal in '{path}'")
             continue
-        
+
         # Check that managed artifacts are under airoom/artifacts/
         if entry.get("management") == "managed" and not path.startswith("airoom/artifacts/"):
-            violations.append(f"{artifact_id}: managed artifact not under airoom/artifacts/ ('{path}')")
-    
+            violations.append(
+                f"{artifact_id}: managed artifact not under airoom/artifacts/ ('{path}')"
+            )
+
     if violations:
-        return {
-            "status": "violation",
-            "details": "; ".join(violations)
-        }
-    
-    return {
-        "status": "ok",
-        "details": "All artifact paths respect project boundaries"
-    }
+        return {"status": "violation", "details": "; ".join(violations)}
+
+    return {"status": "ok", "details": "All artifact paths respect project boundaries"}
 
 
 def _check_orphaned_skills(project: Project) -> dict:
     """Check for skills in project but not in packaged resources."""
     if not project.skills_dir.exists():
-        return {
-            "status": "ok",
-            "details": "No skills directory"
-        }
-    
+        return {"status": "ok", "details": "No skills directory"}
+
     resource_manager = ResourceManager()
     packaged_skills = set(resource_manager.list_packaged_skills())
-    
+
     orphaned = []
     try:
         for entry in project.skills_dir.iterdir():
@@ -416,17 +343,14 @@ def _check_orphaned_skills(project: Project) -> dict:
                     orphaned.append(entry.name)
     except (PermissionError, OSError):
         pass
-    
+
     if orphaned:
         return {
             "status": "found",
-            "details": f"Orphaned skills (not packaged): {', '.join(orphaned)}"
+            "details": f"Orphaned skills (not packaged): {', '.join(orphaned)}",
         }
-    
-    return {
-        "status": "ok",
-        "details": "No orphaned skills"
-    }
+
+    return {"status": "ok", "details": "No orphaned skills"}
 
 
 def _ensure_airoom_structure(project: Project) -> list[str]:
@@ -444,11 +368,11 @@ def _run_all_checks(project: Project, fix: bool = False, dry_run: bool = False) 
     """Run all health checks and return structured results."""
     baseline_manager = BaselineManager(project)
     registry_manager = RegistryManager(project)
-    
+
     # Ensure directory structure if fixing
     if fix and not dry_run:
         _ensure_airoom_structure(project)
-    
+
     return {
         "version": _check_version(project, fix, dry_run),
         "baseline": _check_baseline(project, baseline_manager, fix, dry_run),
@@ -466,7 +390,7 @@ def _render_human(results: dict) -> None:
     table.add_column("Check", style="cyan", width=20)
     table.add_column("Status", justify="center", width=12)
     table.add_column("Details", style="dim")
-    
+
     status_icons = {
         "ok": "✓",
         "missing": "✗",
@@ -476,7 +400,7 @@ def _render_human(results: dict) -> None:
         "found": "⚠",
         "violation": "✗",
     }
-    
+
     status_colors = {
         "ok": "green",
         "missing": "red",
@@ -486,7 +410,7 @@ def _render_human(results: dict) -> None:
         "found": "yellow",
         "violation": "red",
     }
-    
+
     for check_name, result in results.items():
         status = result["status"]
         icon = status_icons.get(status, "?")
@@ -494,9 +418,9 @@ def _render_human(results: dict) -> None:
         table.add_row(
             check_name.replace("_", " ").capitalize(),
             f"[{color}]{icon} {status}[/{color}]",
-            result["details"]
+            result["details"],
         )
-    
+
     console.print(table)
 
 
@@ -514,7 +438,9 @@ def doctor(
     ] = None,
     fix: Annotated[
         bool,
-        typer.Option("--fix", help="Attempt safe repairs (recreate missing files/dirs from baseline)"),
+        typer.Option(
+            "--fix", help="Attempt safe repairs (recreate missing files/dirs from baseline)"
+        ),
     ] = False,
     json_output: Annotated[
         bool,
@@ -526,30 +452,35 @@ def doctor(
     global_opts = ctx.obj
     if global_opts and global_opts.json_output and not json_output:
         json_output = True
-    
+
     # Get dry_run from global options
     dry_run = global_opts.dry_run if global_opts else False
-    
+
     project = _get_project(ctx, path)
-    
+
     # Verify project has been initialized
     if not project.airoom_dir.exists():
         if json_output:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Project not initialized",
+                        "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first.",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
             console.print("Run 'airoom init' to initialize AIroom in this project.")
         raise typer.Exit(1)
-    
+
     results = _run_all_checks(project, fix=fix, dry_run=dry_run)
-    
+
     if json_output:
         _render_json(results)
     else:
         _render_human(results)
-    
+
     # Exit 0 for diagnostics - status is in the output
     # Only exit non-zero for fatal errors (handled above)

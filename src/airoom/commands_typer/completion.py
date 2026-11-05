@@ -22,7 +22,7 @@ def completion(
     if root_ctx is None:
         print("Error: Could not determine root command context")
         raise typer.Exit(1)
-    
+
     click_command = root_ctx.command
 
     # Create the appropriate completion class and generate the script

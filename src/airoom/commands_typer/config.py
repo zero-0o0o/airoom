@@ -82,10 +82,15 @@ def config_show(
     # Verify project has been initialized
     if not project.airoom_dir.exists():
         if use_json:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Project not initialized",
+                        "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first.",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
             console.print("Run 'airoom init' to initialize AIroom in this project.")
@@ -119,16 +124,22 @@ def config_set(
     dry_run = global_opts.dry_run if global_opts else False
     if dry_run:
         from airoom.core.logging import get_logger
+
         log = get_logger(__name__)
         log.info("Dry run: skipping config set")
         if use_json := _get_json_output(ctx, json_output):
-            print(json.dumps({
-                "status": "ok",
-                "dry_run": True,
-                "message": "Dry run: would set config",
-                "key": key,
-                "value": value
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "status": "ok",
+                        "dry_run": True,
+                        "message": "Dry run: would set config",
+                        "key": key,
+                        "value": value,
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[yellow]Dry run:[/yellow] Would set {key} = {value!r}")
         return
@@ -139,10 +150,15 @@ def config_set(
     # Verify project has been initialized
     if not project.airoom_dir.exists():
         if use_json:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Project not initialized",
+                        "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first.",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
             console.print("Run 'airoom init' to initialize AIroom in this project.")
@@ -156,20 +172,13 @@ def config_set(
         config_manager.set(key, parsed_value)
     except Exception as exc:
         if use_json:
-            print(json.dumps({
-                "error": "Failed to set config",
-                "details": str(exc)
-            }, indent=2))
+            print(json.dumps({"error": "Failed to set config", "details": str(exc)}, indent=2))
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
 
     if use_json:
-        print(json.dumps({
-            "status": "ok",
-            "key": key,
-            "value": parsed_value
-        }, indent=2))
+        print(json.dumps({"status": "ok", "key": key, "value": parsed_value}, indent=2))
     else:
         console.print(f"[green]Set:[/green] {key} = {parsed_value}")
 
@@ -192,15 +201,21 @@ def config_unset(
     dry_run = global_opts.dry_run if global_opts else False
     if dry_run:
         from airoom.core.logging import get_logger
+
         log = get_logger(__name__)
         log.info("Dry run: skipping config unset")
         if use_json := _get_json_output(ctx, json_output):
-            print(json.dumps({
-                "status": "ok",
-                "dry_run": True,
-                "message": "Dry run: would unset config",
-                "key": key
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "status": "ok",
+                        "dry_run": True,
+                        "message": "Dry run: would unset config",
+                        "key": key,
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[yellow]Dry run:[/yellow] Would unset {key!r}")
         return
@@ -211,10 +226,15 @@ def config_unset(
     # Verify project has been initialized
     if not project.airoom_dir.exists():
         if use_json:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Project not initialized",
+                        "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first.",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
             console.print("Run 'airoom init' to initialize AIroom in this project.")
@@ -225,19 +245,13 @@ def config_unset(
         config_manager.unset(key)
     except Exception as exc:
         if use_json:
-            print(json.dumps({
-                "error": "Failed to unset config",
-                "details": str(exc)
-            }, indent=2))
+            print(json.dumps({"error": "Failed to unset config", "details": str(exc)}, indent=2))
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
 
     if use_json:
-        print(json.dumps({
-            "status": "ok",
-            "key": key
-        }, indent=2))
+        print(json.dumps({"status": "ok", "key": key}, indent=2))
     else:
         console.print(f"[green]Unset:[/green] {key}")
 

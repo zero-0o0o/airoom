@@ -1,8 +1,5 @@
 """Tests for airoom.core.resources module."""
 
-import tempfile
-from pathlib import Path
-
 import pytest
 
 from airoom.core.resources import ResourceManager
@@ -69,12 +66,12 @@ class TestResourceManager:
         manager = ResourceManager()
         skills_dir = manager.get_resource_path("skills")
         templates_dir = manager.get_resource_path("templates")
-        
+
         assert skills_dir.exists()
         assert skills_dir.is_dir()
         assert templates_dir.exists()
         assert templates_dir.is_dir()
-        
+
         # Check skills subdirectories
         skill_names = manager.list_packaged_skills()
         for skill_name in skill_names:
@@ -84,7 +81,7 @@ class TestResourceManager:
             skill_file = skill_path / "SKILL.md"
             assert skill_file.exists()
             assert skill_file.is_file()
-        
+
         # Check templates
         template_names = manager.list_packaged_templates()
         for template_name in template_names:

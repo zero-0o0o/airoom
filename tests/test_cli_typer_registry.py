@@ -47,16 +47,20 @@ class TestRegistryCommand:
             # Add an artifact via registry manager
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("test-artifact", {
-                "owner": "test-tool",
-                "path": "airoom/artifacts/test-artifact",
-                "type": "file",
-                "management": "managed",
-                "status": "active"
-            })
-            
+            manager.add_artifact(
+                "test-artifact",
+                {
+                    "owner": "test-tool",
+                    "path": "airoom/artifacts/test-artifact",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
             result = self.runner.invoke(app, ["--path", tmpdir, "registry", "list"])
             assert result.exit_code == 0
             assert "test-artifact" in result.stdout
@@ -81,16 +85,20 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("test-artifact", {
-                "owner": "test-tool",
-                "path": "airoom/artifacts/test-artifact",
-                "type": "file",
-                "management": "managed",
-                "status": "active"
-            })
-            
+            manager.add_artifact(
+                "test-artifact",
+                {
+                    "owner": "test-tool",
+                    "path": "airoom/artifacts/test-artifact",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
             result = self.runner.invoke(app, ["--path", tmpdir, "registry", "list", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -138,19 +146,31 @@ class TestRegistryCommand:
         """Test adding a minimal valid artifact."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "my-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/artifacts/my-artifact",
-                "--type", "file",
-                "--management", "managed"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "my-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/my-artifact",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code == 0
             assert "Added artifact" in result.stdout or "added" in result.stdout.lower()
-            
+
             # Verify it was added
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
             data = manager.read()
@@ -161,22 +181,38 @@ class TestRegistryCommand:
         """Test adding artifact with all optional fields."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "my-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/artifacts/my-artifact",
-                "--type", "directory",
-                "--management", "managed",
-                "--status", "inactive",
-                "--original-path", "external/original",
-                "--version", "1.0.0",
-                "--output-setting", "custom"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "my-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/my-artifact",
+                    "--type",
+                    "directory",
+                    "--management",
+                    "managed",
+                    "--status",
+                    "inactive",
+                    "--original-path",
+                    "external/original",
+                    "--version",
+                    "1.0.0",
+                    "--output-setting",
+                    "custom",
+                ],
+            )
             assert result.exit_code == 0
-            
+
             # Verify all fields
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
             data = manager.read()
@@ -194,17 +230,29 @@ class TestRegistryCommand:
         """Test adding an external artifact (not under airoom/artifacts/)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "external-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "external/data/file.txt",
-                "--type", "file",
-                "--management", "external"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "external-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "external/data/file.txt",
+                    "--type",
+                    "file",
+                    "--management",
+                    "external",
+                ],
+            )
             assert result.exit_code == 0
-            
+
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
             data = manager.read()
@@ -215,70 +263,137 @@ class TestRegistryCommand:
         """Test that managed artifact must be under airoom/artifacts/."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "generated/output.txt",
-                "--type", "file",
-                "--management", "managed"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "generated/output.txt",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code != 0
-            assert "must be under airoom/artifacts" in result.stdout or "managed artifact path" in result.stdout
+            assert (
+                "must be under airoom/artifacts" in result.stdout
+                or "managed artifact path" in result.stdout
+            )
 
     def test_registry_add_invalid_type_fails(self):
         """Test that invalid type is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/artifacts/bad",
-                "--type", "invalid",
-                "--management", "managed"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/bad",
+                    "--type",
+                    "invalid",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code != 0
-            assert "type must be file or directory" in result.stdout or "invalid" in result.stdout.lower()
+            assert (
+                "type must be file or directory" in result.stdout
+                or "invalid" in result.stdout.lower()
+            )
 
     def test_registry_add_invalid_management_fails(self):
         """Test that invalid management is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/artifacts/bad",
-                "--type", "file",
-                "--management", "invalid"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/bad",
+                    "--type",
+                    "file",
+                    "--management",
+                    "invalid",
+                ],
+            )
             assert result.exit_code != 0
-            assert "management must be managed or external" in result.stdout or "invalid" in result.stdout.lower()
+            assert (
+                "management must be managed or external" in result.stdout
+                or "invalid" in result.stdout.lower()
+            )
 
     def test_registry_add_invalid_status_fails(self):
         """Test that invalid status is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/artifacts/bad",
-                "--type", "file",
-                "--management", "managed",
-                "--status", "invalid"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/bad",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                    "--status",
+                    "invalid",
+                ],
+            )
             assert result.exit_code != 0
-            assert "status must be active or inactive" in result.stdout or "invalid" in result.stdout.lower()
+            assert (
+                "status must be active or inactive" in result.stdout
+                or "invalid" in result.stdout.lower()
+            )
 
     def test_registry_add_missing_required_field_fails(self):
         """Test that missing required fields are rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
             # Missing --owner
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--artifact-path", "airoom/artifacts/bad",
-                "--type", "file",
-                "--management", "managed"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--artifact-path",
+                    "airoom/artifacts/bad",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code != 0
             assert "Missing option" in result.output or "required" in result.output.lower()
 
@@ -288,20 +403,38 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("existing", {
-                "owner": "tool", "path": "airoom/artifacts/existing",
-                "type": "file", "management": "managed", "status": "active"
-            })
-            
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "existing",
-                "--owner", "other-tool",
-                "--artifact-path", "airoom/artifacts/other",
-                "--type", "file",
-                "--management", "managed"
-            ])
+            manager.add_artifact(
+                "existing",
+                {
+                    "owner": "tool",
+                    "path": "airoom/artifacts/existing",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "existing",
+                    "--owner",
+                    "other-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/other",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code != 0
             assert "already exists" in result.stdout
 
@@ -311,20 +444,38 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("artifact1", {
-                "owner": "tool1", "path": "airoom/artifacts/shared",
-                "type": "file", "management": "managed", "status": "active"
-            })
-            
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "artifact2",
-                "--owner", "tool2",
-                "--artifact-path", "airoom/artifacts/shared",
-                "--type", "file",
-                "--management", "managed"
-            ])
+            manager.add_artifact(
+                "artifact1",
+                {
+                    "owner": "tool1",
+                    "path": "airoom/artifacts/shared",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "artifact2",
+                    "--owner",
+                    "tool2",
+                    "--artifact-path",
+                    "airoom/artifacts/shared",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code != 0
             assert "duplicate artifact path" in result.stdout
 
@@ -334,20 +485,38 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("artifact1", {
-                "owner": "tool1", "path": "external/shared.txt",
-                "type": "file", "management": "external", "status": "active"
-            })
-            
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "artifact2",
-                "--owner", "tool2",
-                "--artifact-path", "external/shared.txt",
-                "--type", "file",
-                "--management", "external"
-            ])
+            manager.add_artifact(
+                "artifact1",
+                {
+                    "owner": "tool1",
+                    "path": "external/shared.txt",
+                    "type": "file",
+                    "management": "external",
+                    "status": "active",
+                },
+            )
+
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "artifact2",
+                    "--owner",
+                    "tool2",
+                    "--artifact-path",
+                    "external/shared.txt",
+                    "--type",
+                    "file",
+                    "--management",
+                    "external",
+                ],
+            )
             assert result.exit_code != 0
             assert "duplicate artifact path" in result.stdout
 
@@ -355,13 +524,24 @@ class TestRegistryCommand:
         """Test that invalid artifact ID (with slash) is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "invalid/id",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/artifacts/bad",
-                "--type", "file",
-                "--management", "managed"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "invalid/id",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/bad",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code != 0
             assert "invalid artifact id" in result.stdout
 
@@ -370,13 +550,24 @@ class TestRegistryCommand:
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
             # Absolute path
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "/absolute/path",
-                "--type", "file",
-                "--management", "external"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "/absolute/path",
+                    "--type",
+                    "file",
+                    "--management",
+                    "external",
+                ],
+            )
             assert result.exit_code != 0
             assert "must not be absolute" in result.stdout or "absolute" in result.stdout.lower()
 
@@ -384,13 +575,24 @@ class TestRegistryCommand:
         """Test that path with .. is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/../outside",
-                "--type", "file",
-                "--management", "external"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/../outside",
+                    "--type",
+                    "file",
+                    "--management",
+                    "external",
+                ],
+            )
             assert result.exit_code != 0
             assert "must not be absolute or contain" in result.stdout or ".." in result.stdout
 
@@ -398,41 +600,77 @@ class TestRegistryCommand:
         """Test that path with backslash is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom\\artifacts\\bad",
-                "--type", "file",
-                "--management", "external"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom\\artifacts\\bad",
+                    "--type",
+                    "file",
+                    "--management",
+                    "external",
+                ],
+            )
             assert result.exit_code != 0
-            assert "must not be absolute or contain" in result.stdout or "backslash" in result.stdout.lower()
+            assert (
+                "must not be absolute or contain" in result.stdout
+                or "backslash" in result.stdout.lower()
+            )
 
     def test_registry_add_empty_owner_fails(self):
         """Test that empty owner is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "bad-artifact",
-                "--owner", "",
-                "--artifact-path", "airoom/artifacts/bad",
-                "--type", "file",
-                "--management", "managed"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "bad-artifact",
+                    "--owner",
+                    "",
+                    "--artifact-path",
+                    "airoom/artifacts/bad",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                ],
+            )
             assert result.exit_code != 0
 
     def test_registry_add_json_output(self):
         """Test registry add with --json flag."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "add", "my-artifact",
-                "--owner", "my-tool",
-                "--artifact-path", "airoom/artifacts/my-artifact",
-                "--type", "file",
-                "--management", "managed",
-                "--json"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "--path",
+                    tmpdir,
+                    "registry",
+                    "add",
+                    "my-artifact",
+                    "--owner",
+                    "my-tool",
+                    "--artifact-path",
+                    "airoom/artifacts/my-artifact",
+                    "--type",
+                    "file",
+                    "--management",
+                    "managed",
+                    "--json",
+                ],
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["status"] == "ok" or data.get("added") == "my-artifact"
@@ -455,19 +693,26 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("to-remove", {
-                "owner": "tool", "path": "airoom/artifacts/to-remove",
-                "type": "file", "management": "managed", "status": "active"
-            })
-            
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "remove", "to-remove", "--force"
-            ])
+            manager.add_artifact(
+                "to-remove",
+                {
+                    "owner": "tool",
+                    "path": "airoom/artifacts/to-remove",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "registry", "remove", "to-remove", "--force"]
+            )
             assert result.exit_code == 0
             assert "Removed artifact" in result.stdout or "removed" in result.stdout.lower()
-            
+
             data = manager.read()
             assert "to-remove" not in data["artifacts"]
 
@@ -475,9 +720,9 @@ class TestRegistryCommand:
         """Test removing nonexistent artifact fails."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "remove", "nonexistent", "--force"
-            ])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "registry", "remove", "nonexistent", "--force"]
+            )
             assert result.exit_code != 0
             assert "not found" in result.stdout
 
@@ -487,20 +732,27 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("to-remove", {
-                "owner": "tool", "path": "airoom/artifacts/to-remove",
-                "type": "file", "management": "managed", "status": "active"
-            })
-            
+            manager.add_artifact(
+                "to-remove",
+                {
+                    "owner": "tool",
+                    "path": "airoom/artifacts/to-remove",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
             # Simulate user saying 'n' (no)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "remove", "to-remove"
-            ], input="n\n")
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "registry", "remove", "to-remove"], input="n\n"
+            )
             assert result.exit_code != 0
             assert "cancelled" in result.stdout.lower() or "abort" in result.stdout.lower()
-            
+
             # Artifact should still exist
             data = manager.read()
             assert "to-remove" in data["artifacts"]
@@ -511,20 +763,27 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("to-remove", {
-                "owner": "tool", "path": "airoom/artifacts/to-remove",
-                "type": "file", "management": "managed", "status": "active"
-            })
-            
+            manager.add_artifact(
+                "to-remove",
+                {
+                    "owner": "tool",
+                    "path": "airoom/artifacts/to-remove",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
             # Simulate user saying 'y' (yes)
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "remove", "to-remove"
-            ], input="y\n")
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "registry", "remove", "to-remove"], input="y\n"
+            )
             assert result.exit_code == 0
             assert "Removed artifact" in result.stdout or "removed" in result.stdout.lower()
-            
+
             data = manager.read()
             assert "to-remove" not in data["artifacts"]
 
@@ -534,16 +793,23 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("to-remove", {
-                "owner": "tool", "path": "airoom/artifacts/to-remove",
-                "type": "file", "management": "managed", "status": "active"
-            })
-            
-            result = self.runner.invoke(app, [
-                "--path", tmpdir, "registry", "remove", "to-remove", "--force", "--json"
-            ])
+            manager.add_artifact(
+                "to-remove",
+                {
+                    "owner": "tool",
+                    "path": "airoom/artifacts/to-remove",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "registry", "remove", "to-remove", "--force", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["status"] == "ok" or data.get("removed") == "to-remove"
@@ -583,7 +849,7 @@ class TestRegistryCommand:
             # Corrupt the registry
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             registry_file.write_text("version: 2\nartifacts: {}\ntools: {}\n", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "registry", "validate"])
             assert result.exit_code != 0
             assert "invalid" in result.stdout.lower() or "error" in result.stdout.lower()
@@ -594,7 +860,7 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             registry_file.write_text("version: 2\nartifacts: {}\ntools: {}\n", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "registry", "validate", "--json"])
             assert result.exit_code != 0
             data = json.loads(result.stdout)
@@ -617,18 +883,22 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("my-artifact", {
-                "owner": "my-tool",
-                "path": "airoom/artifacts/my-artifact",
-                "type": "file",
-                "management": "managed",
-                "status": "active",
-                "original_path": "external/original",
-                "version": "1.0.0"
-            })
-            
+            manager.add_artifact(
+                "my-artifact",
+                {
+                    "owner": "my-tool",
+                    "path": "airoom/artifacts/my-artifact",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                    "original_path": "external/original",
+                    "version": "1.0.0",
+                },
+            )
+
             result = self.runner.invoke(app, ["--path", tmpdir, "registry", "show", "my-artifact"])
             assert result.exit_code == 0
             assert "my-artifact" in result.stdout
@@ -653,17 +923,23 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("my-artifact", {
-                "owner": "my-tool",
-                "path": "airoom/artifacts/my-artifact",
-                "type": "file",
-                "management": "managed",
-                "status": "active"
-            })
-            
-            result = self.runner.invoke(app, ["--path", tmpdir, "registry", "show", "my-artifact", "--json"])
+            manager.add_artifact(
+                "my-artifact",
+                {
+                    "owner": "my-tool",
+                    "path": "airoom/artifacts/my-artifact",
+                    "type": "file",
+                    "management": "managed",
+                    "status": "active",
+                },
+            )
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "registry", "show", "my-artifact", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data["id"] == "my-artifact"
@@ -679,17 +955,23 @@ class TestRegistryCommand:
             self._init_project(tmpdir)
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
-            manager.add_artifact("external-artifact", {
-                "owner": "my-tool",
-                "path": "external/data.txt",
-                "type": "file",
-                "management": "external",
-                "status": "inactive"
-            })
-            
-            result = self.runner.invoke(app, ["--path", tmpdir, "registry", "show", "external-artifact"])
+            manager.add_artifact(
+                "external-artifact",
+                {
+                    "owner": "my-tool",
+                    "path": "external/data.txt",
+                    "type": "file",
+                    "management": "external",
+                    "status": "inactive",
+                },
+            )
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "registry", "show", "external-artifact"]
+            )
             assert result.exit_code == 0
             assert "external-artifact" in result.stdout
             assert "external" in result.stdout
@@ -702,12 +984,20 @@ class TestRegistryCommand:
     def test_registry_commands_fail_on_uninitialized_project(self):
         """Test all registry commands fail gracefully on uninitialized project."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            for subcmd in ["list", "add test --owner t --artifact-path p --type file --management managed",
-                          "remove test --force", "validate", "show test"]:
+            for subcmd in [
+                "list",
+                "add test --owner t --artifact-path p --type file --management managed",
+                "remove test --force",
+                "validate",
+                "show test",
+            ]:
                 cmd = ["--path", tmpdir, "registry"] + subcmd.split()
                 result = self.runner.invoke(app, cmd)
                 assert result.exit_code != 0
-                assert "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+                assert (
+                    "not initialized" in result.stdout.lower()
+                    or "not found" in result.stdout.lower()
+                )
 
 
 if __name__ == "__main__":

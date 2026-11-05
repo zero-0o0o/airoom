@@ -9,7 +9,7 @@ and commands/upgrade.py (get_installed_version).
 
 from pathlib import Path
 
-from airoom.core.atomic import atomic_write, AtomicWriteError
+from airoom.core.atomic import atomic_write
 
 
 def read_version_file(version_path: Path) -> str:

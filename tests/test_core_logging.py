@@ -193,11 +193,11 @@ class TestConfigureLogging:
         # Add a dummy handler first
         root_logger = logging.getLogger()
         initial_handler_count = len(root_logger.handlers)
-        
+
         class DummyHandler(logging.Handler):
             def emit(self, record):
                 pass
-        
+
         dummy_handler = DummyHandler()
         root_logger.addHandler(dummy_handler)
         assert len(root_logger.handlers) == initial_handler_count + 1

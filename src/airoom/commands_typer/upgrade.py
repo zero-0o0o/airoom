@@ -8,14 +8,12 @@ import sys
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
 
-from airoom import __version__
-from airoom.core.logging import configure_logging, get_logger
+from airoom.core.logging import get_logger
 from airoom.core.types import GlobalOptions
 from airoom.core.version import get_installed_version
 
@@ -307,7 +305,9 @@ def upgrade(
             parse_version(target_version)
         except ValueError:
             if json_output:
-                _output_json(installed_version, "", "error", f"Invalid version format: {target_version}")
+                _output_json(
+                    installed_version, "", "error", f"Invalid version format: {target_version}"
+                )
             else:
                 console.print(f"[red]Error:[/red] Invalid version format: {target_version}")
                 console.print("Expected format: X.Y.Z (e.g., 0.2.0)")
@@ -330,9 +330,16 @@ def upgrade(
                 data = json.loads(response.read().decode("utf-8"))
                 if not isinstance(data, dict):
                     if json_output:
-                        _output_json(installed_version, "", "error", "Release API returned unexpected response")
+                        _output_json(
+                            installed_version,
+                            "",
+                            "error",
+                            "Release API returned unexpected response",
+                        )
                     else:
-                        console.print("[red]Error:[/red] Release API returned an unexpected response")
+                        console.print(
+                            "[red]Error:[/red] Release API returned an unexpected response"
+                        )
                     raise typer.Exit(1)
                 if data.get("tag_name") not in (f"v{target_version}", target_version):
                     if json_output:
@@ -344,13 +351,25 @@ def upgrade(
                     raise typer.Exit(3)
                 if data.get("draft"):
                     if json_output:
-                        _output_json(installed_version, "", "error", f"Version {target_version} is a draft release")
+                        _output_json(
+                            installed_version,
+                            "",
+                            "error",
+                            f"Version {target_version} is a draft release",
+                        )
                     else:
-                        console.print(f"[red]Error:[/red] Version {target_version} is a draft release")
+                        console.print(
+                            f"[red]Error:[/red] Version {target_version} is a draft release"
+                        )
                     raise typer.Exit(3)
                 if data.get("prerelease") and not include_prereleases:
                     if json_output:
-                        _output_json(installed_version, target_version, "error", f"Version {target_version} is a prerelease. Use --prerelease to allow.")
+                        _output_json(
+                            installed_version,
+                            target_version,
+                            "error",
+                            f"Version {target_version} is a prerelease. Use --prerelease to allow.",
+                        )
                     else:
                         console.print(
                             f"[red]Error:[/red] Version {target_version} is a prerelease. Use --prerelease to allow."
@@ -359,18 +378,29 @@ def upgrade(
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 if json_output:
-                    _output_json(installed_version, target_version, "error", f"Version {target_version} not found in releases")
+                    _output_json(
+                        installed_version,
+                        target_version,
+                        "error",
+                        f"Version {target_version} not found in releases",
+                    )
                 else:
-                    console.print(f"[red]Error:[/red] Version {target_version} not found in releases")
+                    console.print(
+                        f"[red]Error:[/red] Version {target_version} not found in releases"
+                    )
                 raise typer.Exit(3)
             if json_output:
-                _output_json(installed_version, target_version, "error", f"Failed to verify release: {e}")
+                _output_json(
+                    installed_version, target_version, "error", f"Failed to verify release: {e}"
+                )
             else:
                 console.print(f"[red]Error:[/red] Failed to verify release: {e}")
             raise typer.Exit(1)
         except (urllib.error.URLError, json.JSONDecodeError) as e:
             if json_output:
-                _output_json(installed_version, target_version, "error", f"Failed to verify release: {e}")
+                _output_json(
+                    installed_version, target_version, "error", f"Failed to verify release: {e}"
+                )
             else:
                 console.print(f"[red]Error:[/red] Failed to verify release: {e}")
             raise typer.Exit(1)
@@ -405,7 +435,13 @@ def upgrade(
     cmp = compare_versions(installed_version, latest_version)
     if cmp >= 0:
         if json_output:
-            _output_json(installed_version, latest_version, "up_to_date", "Already at the latest version", tag_name)
+            _output_json(
+                installed_version,
+                latest_version,
+                "up_to_date",
+                "Already at the latest version",
+                tag_name,
+            )
         else:
             console.print("Already at the latest version.")
         raise typer.Exit(2)
@@ -413,7 +449,13 @@ def upgrade(
     # Check if latest is prerelease
     if is_prerelease(latest_version) and not include_prereleases:
         if json_output:
-            _output_json(installed_version, latest_version, "prerelease_blocked", "Latest version is a prerelease. Use --prerelease to upgrade to it.", tag_name)
+            _output_json(
+                installed_version,
+                latest_version,
+                "prerelease_blocked",
+                "Latest version is a prerelease. Use --prerelease to upgrade to it.",
+                tag_name,
+            )
         else:
             console.print("Latest version is a prerelease. Use --prerelease to upgrade to it.")
         raise typer.Exit(2)
@@ -438,7 +480,13 @@ def upgrade(
     new_version = verify_installation()
     if new_version != latest_version:
         if json_output:
-            _output_json(installed_version, latest_version, "error", f"Upgrade installed version {new_version or 'unknown'}; expected {latest_version}", tag_name)
+            _output_json(
+                installed_version,
+                latest_version,
+                "error",
+                f"Upgrade installed version {new_version or 'unknown'}; expected {latest_version}",
+                tag_name,
+            )
         else:
             console.print(
                 f"[red]Error:[/red] Upgrade installed version {new_version or 'unknown'}; expected {latest_version}."
@@ -449,12 +497,20 @@ def upgrade(
         console.print(f"[green]Successfully upgraded to version {new_version}[/green]")
 
     if json_output:
-        _output_json(installed_version, new_version, "success", f"Successfully upgraded to version {new_version}", tag_name)
+        _output_json(
+            installed_version,
+            new_version,
+            "success",
+            f"Successfully upgraded to version {new_version}",
+            tag_name,
+        )
 
     raise typer.Exit(0)
 
 
-upgrade_app = typer.Typer(name="upgrade", help="Upgrade the global CLI", invoke_without_command=True)
+upgrade_app = typer.Typer(
+    name="upgrade", help="Upgrade the global CLI", invoke_without_command=True
+)
 upgrade_app.callback()(upgrade)
 
 

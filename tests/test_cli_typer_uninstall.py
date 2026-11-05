@@ -152,7 +152,12 @@ class TestPromptConfirmation:
 class TestTyperUninstallCommand:
     """Integration tests for the Typer uninstall command."""
 
-    def run_uninstall(self, args: list[str] | None = None, global_args: list[str] | None = None, input_data: str | None = None) -> tuple[int, str]:
+    def run_uninstall(
+        self,
+        args: list[str] | None = None,
+        global_args: list[str] | None = None,
+        input_data: str | None = None,
+    ) -> tuple[int, str]:
         """Run uninstall command."""
         runner = CliRunner()
         cmd = []
@@ -189,9 +194,7 @@ class TestTyperUninstallCommand:
     @patch("airoom.commands_typer.uninstall.is_installed_via_pipx")
     @patch("airoom.commands_typer.uninstall.uninstall_via_pipx")
     @patch("airoom.commands_typer.uninstall.verify_uninstallation")
-    def test_uninstall_success(
-        self, mock_verify, mock_uninstall, mock_pipx_check, mock_pipx_path
-    ):
+    def test_uninstall_success(self, mock_verify, mock_uninstall, mock_pipx_check, mock_pipx_path):
         """Test successful uninstall with --yes."""
         mock_pipx_path.return_value = "/usr/local/bin/pipx"
         mock_pipx_check.return_value = True
@@ -296,7 +299,11 @@ class TestTyperUninstallCommand:
 
         exit_code, output = self.run_uninstall(["--yes"])
         assert exit_code == 1
-        assert "warning" in output.lower() or "still be installed" in output.lower() or "verify" in output.lower()
+        assert (
+            "warning" in output.lower()
+            or "still be installed" in output.lower()
+            or "verify" in output.lower()
+        )
 
     @patch("airoom.commands_typer.uninstall.get_pipx_path")
     @patch("airoom.commands_typer.uninstall.is_installed_via_pipx")

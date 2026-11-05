@@ -38,7 +38,9 @@ class TestOrganizeCommand:
         with tempfile.TemporaryDirectory() as tmpdir:
             result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive"])
             assert result.exit_code != 0
-            assert "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            assert (
+                "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            )
 
     def test_organize_dry_run_shows_plan(self):
         """Test organize --dry-run shows the relocation plan without executing."""
@@ -49,7 +51,9 @@ class TestOrganizeCommand:
             graphify_dir.mkdir()
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--dry-run", "--non-interactive", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--dry-run", "--non-interactive", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             # Should show plan in dry-run mode
@@ -67,7 +71,9 @@ class TestOrganizeCommand:
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
 
             # Simulate user selecting "skip" for the candidate
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--interactive"], input="skip\n")
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--interactive"], input="skip\n"
+            )
             assert result.exit_code == 0
             # Artifact should not be moved
             assert graphify_dir.exists()
@@ -81,14 +87,22 @@ class TestOrganizeCommand:
             graphify_dir.mkdir()
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--non-interactive", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             # Should have executed the plan
-            assert data.get("success") is True or "executed" in str(data).lower() or "moved" in str(data).lower()
+            assert (
+                data.get("success") is True
+                or "executed" in str(data).lower()
+                or "moved" in str(data).lower()
+            )
             # Artifact should be moved to airoom/artifacts/
             target_path = Path(tmpdir) / "airoom" / "artifacts" / "graphify-out"
-            assert target_path.exists() or any((Path(tmpdir) / "airoom" / "artifacts").glob("graphify-out*"))
+            assert target_path.exists() or any(
+                (Path(tmpdir) / "airoom" / "artifacts").glob("graphify-out*")
+            )
 
     def test_organize_non_interactive_external_for_claude(self):
         """Test organize --non-interactive registers external for non-relocatable tools (e.g., .claude)."""
@@ -99,16 +113,23 @@ class TestOrganizeCommand:
             claude_dir.mkdir()
             (claude_dir / "settings.json").write_text("{}", encoding="utf-8")
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--non-interactive", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             # Should have registered as external
-            assert data.get("success") is True or "executed" in str(data).lower() or "registered" in str(data).lower()
+            assert (
+                data.get("success") is True
+                or "executed" in str(data).lower()
+                or "registered" in str(data).lower()
+            )
             # Artifact should NOT be moved, but registered as external
             assert claude_dir.exists()
             # Check registry for external entry
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
             registry_data = manager.read()
@@ -135,7 +156,9 @@ class TestOrganizeCommand:
             superpowers_dir.mkdir(parents=True)
             (superpowers_dir / "session.log").write_text("superpowers session", encoding="utf-8")
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--non-interactive", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert data.get("success") is True
@@ -150,6 +173,7 @@ class TestOrganizeCommand:
             # Check registry has both artifacts
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
             registry_data = manager.read()
@@ -173,7 +197,9 @@ class TestOrganizeCommand:
             # We'll test that the rollback mechanism is invoked conceptually
             # by checking that partial failures are handled gracefully
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--non-interactive", "--json"]
+            )
             # Should either succeed or fail gracefully with rollback
             assert result.exit_code in (0, 1)
             if result.exit_code != 0:
@@ -184,7 +210,9 @@ class TestOrganizeCommand:
         """Test that global --json flag works with organize command."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, ["--json", "--path", tmpdir, "organize", "--non-interactive", "--dry-run"])
+            result = self.runner.invoke(
+                app, ["--json", "--path", tmpdir, "organize", "--non-interactive", "--dry-run"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             assert "plan" in data or "actions" in data or "messages" in data
@@ -197,7 +225,9 @@ class TestOrganizeCommand:
             graphify_dir.mkdir()
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive", "--dry-run"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--non-interactive", "--dry-run"]
+            )
             assert result.exit_code == 0
 
     def test_organize_human_output_format(self):
@@ -208,7 +238,9 @@ class TestOrganizeCommand:
             graphify_dir.mkdir()
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
 
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive", "--dry-run"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--non-interactive", "--dry-run"]
+            )
             assert result.exit_code == 0
             # Should contain Rich table-like output
             assert "│" in result.stdout or "┌" in result.stdout or "Plan" in result.stdout
@@ -222,11 +254,15 @@ class TestOrganizeCommand:
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
 
             # Simulate user selecting "route" (managed)
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--interactive"], input="route\n")
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--interactive"], input="route\n"
+            )
             assert result.exit_code == 0
             # Artifact should be moved
             target = Path(tmpdir) / "airoom" / "artifacts" / "graphify-out"
-            assert target.exists() or any((Path(tmpdir) / "airoom" / "artifacts").glob("graphify-out*"))
+            assert target.exists() or any(
+                (Path(tmpdir) / "airoom" / "artifacts").glob("graphify-out*")
+            )
 
     def test_organize_interactive_track_external_option(self):
         """Test interactive mode allows 'track-external' option."""
@@ -237,7 +273,9 @@ class TestOrganizeCommand:
             (claude_dir / "settings.json").write_text("{}", encoding="utf-8")
 
             # Simulate user selecting "track-external"
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--interactive"], input="track-external\n")
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--interactive"], input="track-external\n"
+            )
             assert result.exit_code == 0
             # Artifact should remain in place but be registered as external
             assert claude_dir.exists()
@@ -251,28 +289,39 @@ class TestOrganizeCommand:
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
 
             # Simulate user selecting "skip"
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--interactive"], input="skip\n")
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--interactive"], input="skip\n"
+            )
             assert result.exit_code == 0
             # Artifact should remain unchanged
             assert graphify_dir.exists()
             # Should not be in registry
             from airoom.core.project import Project
             from airoom.core.registry import RegistryManager
+
             project = Project(Path(tmpdir))
             manager = RegistryManager(project)
             registry_data = manager.read()
             artifacts = registry_data.get("artifacts", {})
-            graphify_artifacts = [a for a in artifacts.values() if "graphify" in a.get("path", "").lower()]
+            graphify_artifacts = [
+                a for a in artifacts.values() if "graphify" in a.get("path", "").lower()
+            ]
             assert len(graphify_artifacts) == 0
 
     def test_organize_empty_project_no_candidates(self):
         """Test organize on a project with no unregistered candidates."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_project(tmpdir)
-            result = self.runner.invoke(app, ["--path", tmpdir, "organize", "--non-interactive", "--json"])
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "organize", "--non-interactive", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
-            assert data.get("success") is True or "no candidates" in str(data).lower() or "nothing" in str(data).lower()
+            assert (
+                data.get("success") is True
+                or "no candidates" in str(data).lower()
+                or "nothing" in str(data).lower()
+            )
 
     def test_organize_updates_gitignore(self):
         """Test organize updates .gitignore for managed artifacts."""

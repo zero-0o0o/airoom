@@ -28,6 +28,7 @@ def _yaml() -> YAML:
 @dataclass
 class DiscoveredArtifact:
     """Represents a discovered AI artifact candidate."""
+
     path: str
     likely_owner: str
     evidence: list[str]
@@ -39,13 +40,21 @@ class DiscoveredArtifact:
 @dataclass
 class RegistryDiscrepancy:
     """Represents a discrepancy between registry and filesystem."""
-    kind: Literal["missing_path", "unregistered_candidate", "type_mismatch", "placement_mismatch", "duplicate_claim"]
+
+    kind: Literal[
+        "missing_path",
+        "unregistered_candidate",
+        "type_mismatch",
+        "placement_mismatch",
+        "duplicate_claim",
+    ]
     details: str
 
 
 @dataclass
 class DiscoveryReport:
     """Complete discovery scan report."""
+
     inspected_locations: list[str]
     registered_artifacts: list[tuple[str, bool]]  # (id, exists)
     unregistered_candidates: list[DiscoveredArtifact]
@@ -101,26 +110,69 @@ class DiscoveryEngine:
 
     # Source code patterns to ignore
     SOURCE_EXTENSIONS = {
-        ".py", ".rs", ".js", ".ts", ".jsx", ".tsx", ".go", ".java", ".kt",
-        ".c", ".cpp", ".cc", ".h", ".hpp", ".cs", ".rb", ".php", ".swift",
-        ".scala", ".clj", ".hs", ".ml", ".fs", ".vb", ".dart", ".lua",
+        ".py",
+        ".rs",
+        ".js",
+        ".ts",
+        ".jsx",
+        ".tsx",
+        ".go",
+        ".java",
+        ".kt",
+        ".c",
+        ".cpp",
+        ".cc",
+        ".h",
+        ".hpp",
+        ".cs",
+        ".rb",
+        ".php",
+        ".swift",
+        ".scala",
+        ".clj",
+        ".hs",
+        ".ml",
+        ".fs",
+        ".vb",
+        ".dart",
+        ".lua",
     }
 
     # Config files that are project files, not AI artifacts
     PROJECT_CONFIG_FILES = {
-        "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml",
-        "Cargo.toml", "Cargo.lock",
-        "pyproject.toml", "requirements.txt", "setup.py", "setup.cfg",
-        "pom.xml", "build.gradle", "build.gradle.kts",
-        "go.mod", "go.sum",
-        "composer.json", "composer.lock",
-        "Gemfile", "Gemfile.lock",
-        "Makefile", "CMakeLists.txt",
-        "tsconfig.json", "jsconfig.json",
-        ".eslintrc", ".eslintrc.json", ".eslintrc.js",
-        ".prettierrc", ".prettierrc.json",
-        "docker-compose.yml", "docker-compose.yaml", "Dockerfile",
-        ".gitignore", ".dockerignore",
+        "package.json",
+        "package-lock.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+        "Cargo.toml",
+        "Cargo.lock",
+        "pyproject.toml",
+        "requirements.txt",
+        "setup.py",
+        "setup.cfg",
+        "pom.xml",
+        "build.gradle",
+        "build.gradle.kts",
+        "go.mod",
+        "go.sum",
+        "composer.json",
+        "composer.lock",
+        "Gemfile",
+        "Gemfile.lock",
+        "Makefile",
+        "CMakeLists.txt",
+        "tsconfig.json",
+        "jsconfig.json",
+        ".eslintrc",
+        ".eslintrc.json",
+        ".eslintrc.js",
+        ".prettierrc",
+        ".prettierrc.json",
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "Dockerfile",
+        ".gitignore",
+        ".dockerignore",
     }
 
     def __init__(self, project: Project, registry: RegistryManager) -> None:
@@ -163,9 +215,7 @@ class DiscoveryEngine:
             discrepancies=[],
             recommendations=[],
         )
-        self._check_registry_discrepancies(
-            report, registered_artifacts, unregistered_candidates
-        )
+        self._check_registry_discrepancies(report, registered_artifacts, unregistered_candidates)
         report.recommendations = self._generate_recommendations(
             unregistered_candidates, report.discrepancies
         )
@@ -241,28 +291,40 @@ class DiscoveryEngine:
                 for pattern, expected_type in self.GRAPHIFY_PATTERNS:
                     if self._matches_pattern(entry.name, rel_path, pattern):
                         if self._type_matches(entry, expected_type):
-                            candidates.append(self._create_candidate(
-                                entry, "Graphify", [f"Matches Graphify pattern: {pattern}"],
-                                expected_type
-                            ))
+                            candidates.append(
+                                self._create_candidate(
+                                    entry,
+                                    "Graphify",
+                                    [f"Matches Graphify pattern: {pattern}"],
+                                    expected_type,
+                                )
+                            )
 
                 # Check Superpowers patterns
                 for pattern, expected_type in self.SUPERPOWERS_PATTERNS:
                     if self._matches_pattern(entry.name, rel_path, pattern):
                         if self._type_matches(entry, expected_type):
-                            candidates.append(self._create_candidate(
-                                entry, "Superpowers", [f"Matches Superpowers pattern: {pattern}"],
-                                expected_type
-                            ))
+                            candidates.append(
+                                self._create_candidate(
+                                    entry,
+                                    "Superpowers",
+                                    [f"Matches Superpowers pattern: {pattern}"],
+                                    expected_type,
+                                )
+                            )
 
                 # Check scratchpad patterns
                 for pattern, expected_type, owner in self.SCRATCHPAD_PATTERNS:
                     if self._matches_pattern(entry.name, rel_path, pattern):
                         if self._type_matches(entry, expected_type):
-                            candidates.append(self._create_candidate(
-                                entry, owner, [f"Matches {owner} pattern: {pattern}"],
-                                expected_type
-                            ))
+                            candidates.append(
+                                self._create_candidate(
+                                    entry,
+                                    owner,
+                                    [f"Matches {owner} pattern: {pattern}"],
+                                    expected_type,
+                                )
+                            )
 
         # Filter out candidates that are already registered
         registered_paths = self._get_registered_paths()
@@ -320,7 +382,7 @@ class DiscoveryEngine:
         path: Path,
         owner: str,
         evidence: list[str],
-        expected_type: Literal["file", "directory"]
+        expected_type: Literal["file", "directory"],
     ) -> DiscoveredArtifact:
         """Create a DiscoveredArtifact from a discovered path."""
         rel_path = path.relative_to(self.project.root).as_posix()
@@ -335,7 +397,9 @@ class DiscoveryEngine:
             relocation_feasibility=feasibility,
         )
 
-    def _evaluate_relocation_feasibility(self, owner: str, path: Path) -> tuple[str, Literal["managed", "external"]]:
+    def _evaluate_relocation_feasibility(
+        self, owner: str, path: Path
+    ) -> tuple[str, Literal["managed", "external"]]:
         """Evaluate if an artifact can be relocated under airoom/artifacts/.
 
         Returns:
@@ -373,7 +437,7 @@ class DiscoveryEngine:
         self,
         report: DiscoveryReport,
         registered_artifacts: list[tuple[str, bool]],
-        unregistered_candidates: list[DiscoveredArtifact]
+        unregistered_candidates: list[DiscoveredArtifact],
     ) -> None:
         """Check for registry discrepancies and add to report.discrepancies."""
         data = self._read_raw_registry()
@@ -384,10 +448,12 @@ class DiscoveryEngine:
             if not exists:
                 entry = artifacts.get(artifact_id, {})
                 path = entry.get("path", "unknown")
-                report.discrepancies.append(RegistryDiscrepancy(
-                    kind="missing_path",
-                    details=f"Registered artifact '{artifact_id}' path does not exist: {path}"
-                ))
+                report.discrepancies.append(
+                    RegistryDiscrepancy(
+                        kind="missing_path",
+                        details=f"Registered artifact '{artifact_id}' path does not exist: {path}",
+                    )
+                )
 
         # Check for type mismatches
         for artifact_id, exists in registered_artifacts:
@@ -395,22 +461,28 @@ class DiscoveryEngine:
                 entry = artifacts.get(artifact_id, {})
                 path = self.project.root / entry.get("path", "")
                 expected_type = entry.get("type", "unknown")
-                actual_type = "directory" if path.is_dir() else "file" if path.is_file() else "unknown"
+                actual_type = (
+                    "directory" if path.is_dir() else "file" if path.is_file() else "unknown"
+                )
                 if actual_type != expected_type:
-                    report.discrepancies.append(RegistryDiscrepancy(
-                        kind="type_mismatch",
-                        details=f"Artifact '{artifact_id}' declared as {expected_type} but is {actual_type} on disk: {entry.get('path', 'unknown')}"
-                    ))
+                    report.discrepancies.append(
+                        RegistryDiscrepancy(
+                            kind="type_mismatch",
+                            details=f"Artifact '{artifact_id}' declared as {expected_type} but is {actual_type} on disk: {entry.get('path', 'unknown')}",
+                        )
+                    )
 
         # Check for placement mismatches (managed but not under airoom/artifacts/)
         for artifact_id, entry in artifacts.items():
             if entry.get("management") == "managed":
                 path = entry.get("path", "")
                 if not path.startswith("airoom/artifacts/"):
-                    report.discrepancies.append(RegistryDiscrepancy(
-                        kind="placement_mismatch",
-                        details=f"Managed artifact '{artifact_id}' path is not under airoom/artifacts/: {path}"
-                    ))
+                    report.discrepancies.append(
+                        RegistryDiscrepancy(
+                            kind="placement_mismatch",
+                            details=f"Managed artifact '{artifact_id}' path is not under airoom/artifacts/: {path}",
+                        )
+                    )
 
         # Check for duplicate claims (same path registered multiple times)
         path_to_ids: dict[str, list[str]] = {}
@@ -422,10 +494,12 @@ class DiscoveryEngine:
 
         for path, ids in path_to_ids.items():
             if len(ids) > 1:
-                report.discrepancies.append(RegistryDiscrepancy(
-                    kind="duplicate_claim",
-                    details=f"Multiple artifacts claim the same path '{path}': {', '.join(ids)}"
-                ))
+                report.discrepancies.append(
+                    RegistryDiscrepancy(
+                        kind="duplicate_claim",
+                        details=f"Multiple artifacts claim the same path '{path}': {', '.join(ids)}",
+                    )
+                )
 
         # Note: unregistered candidates are already in report.unregistered_candidates,
         # so we don't add redundant "unregistered_candidate" discrepancies.
@@ -433,7 +507,7 @@ class DiscoveryEngine:
     def _generate_recommendations(
         self,
         unregistered_candidates: list[DiscoveredArtifact],
-        discrepancies: list[RegistryDiscrepancy]
+        discrepancies: list[RegistryDiscrepancy],
     ) -> list[str]:
         """Generate recommendations based on scan results."""
         recommendations = []
@@ -469,8 +543,12 @@ class DiscoveryEngine:
 
         # Recommendations based on candidates
         if unregistered_candidates:
-            managed_candidates = [c for c in unregistered_candidates if c.recommended_mode == "managed"]
-            external_candidates = [c for c in unregistered_candidates if c.recommended_mode == "external"]
+            managed_candidates = [
+                c for c in unregistered_candidates if c.recommended_mode == "managed"
+            ]
+            external_candidates = [
+                c for c in unregistered_candidates if c.recommended_mode == "external"
+            ]
 
             if managed_candidates:
                 recommendations.append(

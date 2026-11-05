@@ -28,7 +28,11 @@ class TestDiscoverCommand:
         assert result.exit_code == 0
         assert "Discover AI artifacts and registry discrepancies" in result.stdout
         assert "--type" in result.stdout
-        assert "graphify" in result.stdout.lower() or "superpowers" in result.stdout.lower() or "all" in result.stdout.lower()
+        assert (
+            "graphify" in result.stdout.lower()
+            or "superpowers" in result.stdout.lower()
+            or "all" in result.stdout.lower()
+        )
         assert "--json" in result.stdout
 
     def test_discover_human_output_no_project(self):
@@ -36,7 +40,9 @@ class TestDiscoverCommand:
         with tempfile.TemporaryDirectory() as tmpdir:
             result = self.runner.invoke(app, ["--path", tmpdir, "discover"])
             assert result.exit_code != 0
-            assert "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            assert (
+                "not initialized" in result.stdout.lower() or "not found" in result.stdout.lower()
+            )
 
     def test_discover_human_output_basic(self):
         """Test discover command on a fresh initialized project (human output)."""
@@ -79,8 +85,10 @@ class TestDiscoverCommand:
             graphify_dir = Path(tmpdir) / "graphify-out"
             graphify_dir.mkdir()
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
-            
-            result = self.runner.invoke(app, ["--path", tmpdir, "discover", "--type", "graphify", "--json"])
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "discover", "--type", "graphify", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             # Should only have graphify candidates
@@ -95,8 +103,10 @@ class TestDiscoverCommand:
             superpowers_dir = Path(tmpdir) / "docs" / "superpowers"
             superpowers_dir.mkdir(parents=True)
             (superpowers_dir / "session.log").write_text("superpowers session", encoding="utf-8")
-            
-            result = self.runner.invoke(app, ["--path", tmpdir, "discover", "--type", "superpowers", "--json"])
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "discover", "--type", "superpowers", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             # Should only have superpowers candidates
@@ -111,12 +121,14 @@ class TestDiscoverCommand:
             graphify_dir = Path(tmpdir) / "graphify-out"
             graphify_dir.mkdir()
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
-            
+
             superpowers_dir = Path(tmpdir) / "docs" / "superpowers"
             superpowers_dir.mkdir(parents=True)
             (superpowers_dir / "session.log").write_text("superpowers session", encoding="utf-8")
-            
-            result = self.runner.invoke(app, ["--path", tmpdir, "discover", "--type", "all", "--json"])
+
+            result = self.runner.invoke(
+                app, ["--path", tmpdir, "discover", "--type", "all", "--json"]
+            )
             assert result.exit_code == 0
             data = json.loads(result.stdout)
             # Should have both graphify and superpowers candidates
@@ -131,6 +143,7 @@ class TestDiscoverCommand:
             # Add a managed artifact to registry
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["artifacts"]["test-artifact"] = {
@@ -138,18 +151,19 @@ class TestDiscoverCommand:
                 "path": "airoom/artifacts/test-artifact",
                 "type": "file",
                 "management": "managed",
-                "status": "active"
+                "status": "active",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             # Create the artifact file
             artifact_file = Path(tmpdir) / "airoom" / "artifacts" / "test-artifact"
             artifact_file.parent.mkdir(parents=True, exist_ok=True)
             artifact_file.write_text("test content", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "discover", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -172,6 +186,7 @@ class TestDiscoverCommand:
             # Add a managed artifact to registry but don't create the file
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
             from ruamel.yaml import YAML
+
             yaml = YAML()
             data = yaml.load(registry_file.read_text(encoding="utf-8"))
             data["artifacts"]["missing-artifact"] = {
@@ -179,13 +194,14 @@ class TestDiscoverCommand:
                 "path": "airoom/artifacts/missing-artifact",
                 "type": "file",
                 "management": "managed",
-                "status": "active"
+                "status": "active",
             }
             from io import StringIO
+
             output = StringIO()
             yaml.dump(data, output)
             registry_file.write_text(output.getvalue(), encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "discover", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -211,7 +227,7 @@ class TestDiscoverCommand:
             graphify_dir = Path(tmpdir) / "graphify-out"
             graphify_dir.mkdir()
             (graphify_dir / "output.txt").write_text("graphify output", encoding="utf-8")
-            
+
             result = self.runner.invoke(app, ["--path", tmpdir, "discover", "--json"])
             assert result.exit_code == 0
             data = json.loads(result.stdout)
@@ -232,7 +248,10 @@ class TestDiscoverCommand:
             # Should have at least one recommendation
             assert len(data["recommendations"]) >= 1
             # Fresh project should have "no issues found" type recommendation
-            assert any("no issues" in r.lower() or "consistent" in r.lower() for r in data["recommendations"])
+            assert any(
+                "no issues" in r.lower() or "consistent" in r.lower()
+                for r in data["recommendations"]
+            )
 
     def test_discover_global_json_flag(self):
         """Test that global --json flag works with discover command."""
@@ -258,7 +277,13 @@ class TestDiscoverCommand:
             result = self.runner.invoke(app, ["--path", tmpdir, "discover"])
             assert result.exit_code == 0
             # Should contain table-like output
-            assert "│" in result.stdout or "┌" in result.stdout or "└" in result.stdout or "┐" in result.stdout or "┘" in result.stdout
+            assert (
+                "│" in result.stdout
+                or "┌" in result.stdout
+                or "└" in result.stdout
+                or "┐" in result.stdout
+                or "┘" in result.stdout
+            )
 
 
 if __name__ == "__main__":

@@ -59,7 +59,9 @@ def global_options_callback(
     ] = False,
     version: Annotated[
         bool,
-        typer.Option("--version", callback=version_callback, is_eager=True, help="Show version and exit"),
+        typer.Option(
+            "--version", callback=version_callback, is_eager=True, help="Show version and exit"
+        ),
     ] = False,
 ) -> None:
     """Store global options in context object."""

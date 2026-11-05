@@ -1,8 +1,6 @@
 """AIroom init command implementation (Typer-based)."""
 
 import hashlib
-import json
-import sys
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -12,7 +10,7 @@ from rich.console import Console
 from airoom import __version__
 from airoom.core.atomic import atomic_write
 from airoom.core.baseline import BaselineManager
-from airoom.core.project import Project, assert_safe_project_path, find_project_root
+from airoom.core.project import Project, find_project_root
 from airoom.core.registry import RegistryManager
 from airoom.core.resources import ResourceManager
 from airoom.core.version import write_version_file
@@ -193,7 +191,7 @@ def init(
     """Initialize AIroom in a project."""
     # Get global options from context
     global_opts = ctx.obj
-    
+
     # Use global options if local not explicitly set
     project_path = path if path is not None else (global_opts.path if global_opts else None)
     verbose = verbose if verbose > 0 else (global_opts.verbose if global_opts else 0)
@@ -202,6 +200,7 @@ def init(
 
     if dry_run:
         from airoom.core.logging import get_logger
+
         log = get_logger(__name__)
         log.info("Dry run: skipping init")
         console.print("[yellow]Dry run:[/yellow] Would initialize AIroom in project")
@@ -211,7 +210,7 @@ def init(
     try:
         project_root = find_project_root(project_path)
         project = Project(project_root)
-        
+
         # Validate all target paths are safe
         targets = (
             project.airoom_dir,
@@ -225,7 +224,7 @@ def init(
         )
         for target in targets:
             project.assert_safe(target)
-        
+
         # Also validate skill files
         packaged_skills = list_packaged_skills()
         for skill_name in packaged_skills:

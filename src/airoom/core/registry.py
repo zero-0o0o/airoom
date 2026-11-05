@@ -7,10 +7,8 @@ high-level registry operations.
 
 from __future__ import annotations
 
-import os
-import tempfile
 from io import StringIO
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 from typing import Any
 
 from ruamel.yaml import YAML
@@ -295,4 +293,3 @@ class RegistryManager:
             raise RegistryError(f"tool {tool_id!r} not found")
         del data["tools"][tool_id]
         self.write(data)
-

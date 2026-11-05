@@ -2,8 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Annotated, Optional, Callable
-from functools import wraps
+from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
@@ -37,7 +36,9 @@ def _get_json_output(ctx: typer.Context, local_json: bool) -> bool:
     return local_json
 
 
-def _require_project(ctx: typer.Context, path: Optional[Path] = None, json_output: bool = False) -> tuple[Project, RegistryManager, bool]:
+def _require_project(
+    ctx: typer.Context, path: Optional[Path] = None, json_output: bool = False
+) -> tuple[Project, RegistryManager, bool]:
     """Get project and registry manager, verifying project is initialized.
 
     Returns:
@@ -51,10 +52,15 @@ def _require_project(ctx: typer.Context, path: Optional[Path] = None, json_outpu
 
     if not project.airoom_dir.exists():
         if use_json:
-            print(json.dumps({
-                "error": "Project not initialized",
-                "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first."
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Project not initialized",
+                        "details": f"AIroom directory not found at {project.airoom_dir}. Run 'airoom init' first.",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Project not initialized at {project.root}")
             console.print("Run 'airoom init' to initialize AIroom in this project.")
@@ -80,7 +86,9 @@ def _render_artifact_table(artifacts: dict) -> None:
 
     for artifact_id, entry in sorted(artifacts.items()):
         status = entry.get("status", "unknown")
-        status_color = "green" if status == "active" else "yellow" if status == "inactive" else "red"
+        status_color = (
+            "green" if status == "active" else "yellow" if status == "inactive" else "red"
+        )
 
         table.add_row(
             artifact_id,
@@ -111,7 +119,7 @@ def _render_single_artifact_human(artifact_id: str, entry: dict) -> None:
     console.print(f"  [dim]Path:[/dim] {entry.get('path', '')}")
     console.print(f"  Type: {entry.get('type', '')}")
     console.print(f"  Management: {entry.get('management', '')}")
-    status = entry.get('status', '')
+    status = entry.get("status", "")
     status_color = "green" if status == "active" else "yellow" if status == "inactive" else "red"
     console.print(f"  Status: [{status_color}]{status}[/{status_color}]")
 
@@ -149,10 +157,7 @@ def registry_list(
         registry = registry_manager.read()
     except RegistryError as exc:
         if use_json:
-            print(json.dumps({
-                "error": "Registry error",
-                "details": str(exc)
-            }, indent=2))
+            print(json.dumps({"error": "Registry error", "details": str(exc)}, indent=2))
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
@@ -170,13 +175,21 @@ def registry_add(
     ctx: typer.Context,
     artifact_id: Annotated[str, typer.Argument(help="Unique artifact identifier")],
     owner: Annotated[str, typer.Option("--owner", help="Owner/tool name")],
-    artifact_path: Annotated[str, typer.Option("--artifact-path", help="Project-relative artifact path")],
+    artifact_path: Annotated[
+        str, typer.Option("--artifact-path", help="Project-relative artifact path")
+    ],
     type: Annotated[str, typer.Option("--type", help="Artifact type: file or directory")],
-    management: Annotated[str, typer.Option("--management", help="Management mode: managed or external")],
+    management: Annotated[
+        str, typer.Option("--management", help="Management mode: managed or external")
+    ],
     status: Annotated[str, typer.Option("--status", help="Status: active or inactive")] = "active",
-    original_path: Annotated[Optional[str], typer.Option("--original-path", help="Original source path")] = None,
+    original_path: Annotated[
+        Optional[str], typer.Option("--original-path", help="Original source path")
+    ] = None,
     version: Annotated[Optional[str], typer.Option("--version", help="Artifact version")] = None,
-    output_setting: Annotated[Optional[str], typer.Option("--output-setting", help="Output setting")] = None,
+    output_setting: Annotated[
+        Optional[str], typer.Option("--output-setting", help="Output setting")
+    ] = None,
     project_path: Annotated[
         Optional[Path],
         typer.Option("--path", "-p", help="Project directory"),
@@ -191,15 +204,21 @@ def registry_add(
     dry_run = global_opts.dry_run if global_opts else False
     if dry_run:
         from airoom.core.logging import get_logger
+
         log = get_logger(__name__)
         log.info("Dry run: skipping registry add")
         if use_json := _get_json_output(ctx, json_output):
-            print(json.dumps({
-                "status": "ok",
-                "dry_run": True,
-                "message": "Dry run: would add artifact",
-                "artifact_id": artifact_id
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "status": "ok",
+                        "dry_run": True,
+                        "message": "Dry run: would add artifact",
+                        "artifact_id": artifact_id,
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[yellow]Dry run:[/yellow] Would add artifact {artifact_id!r}")
         return
@@ -225,20 +244,18 @@ def registry_add(
         registry_manager.add_artifact(artifact_id, entry)
     except RegistryError as exc:
         if use_json:
-            print(json.dumps({
-                "error": "Failed to add artifact",
-                "details": str(exc)
-            }, indent=2))
+            print(json.dumps({"error": "Failed to add artifact", "details": str(exc)}, indent=2))
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
 
     if use_json:
-        print(json.dumps({
-            "status": "ok",
-            "added": artifact_id,
-            "artifact": {"id": artifact_id, **entry}
-        }, indent=2))
+        print(
+            json.dumps(
+                {"status": "ok", "added": artifact_id, "artifact": {"id": artifact_id, **entry}},
+                indent=2,
+            )
+        )
     else:
         console.print(f"[green]Added artifact:[/green] {artifact_id}")
 
@@ -248,7 +265,9 @@ def registry_remove(
     ctx: typer.Context,
     artifact_id: Annotated[str, typer.Argument(help="Artifact identifier to remove")],
     force: Annotated[bool, typer.Option("--force", "-f", help="Skip confirmation prompt")] = False,
-    yes: Annotated[bool, typer.Option("--yes", "-y", help="Alias for --force, for scripted use")] = False,
+    yes: Annotated[
+        bool, typer.Option("--yes", "-y", help="Alias for --force, for scripted use")
+    ] = False,
     project_path: Annotated[
         Optional[Path],
         typer.Option("--path", "-p", help="Project directory"),
@@ -263,15 +282,21 @@ def registry_remove(
     dry_run = global_opts.dry_run if global_opts else False
     if dry_run:
         from airoom.core.logging import get_logger
+
         log = get_logger(__name__)
         log.info("Dry run: skipping registry remove")
         if use_json := _get_json_output(ctx, json_output):
-            print(json.dumps({
-                "status": "ok",
-                "dry_run": True,
-                "message": "Dry run: would remove artifact",
-                "artifact_id": artifact_id
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "status": "ok",
+                        "dry_run": True,
+                        "message": "Dry run: would remove artifact",
+                        "artifact_id": artifact_id,
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[yellow]Dry run:[/yellow] Would remove artifact {artifact_id!r}")
         return
@@ -283,10 +308,15 @@ def registry_remove(
     registry = registry_manager.read()
     if artifact_id not in registry.get("artifacts", {}):
         if use_json:
-            print(json.dumps({
-                "error": "Artifact not found",
-                "details": f"Artifact {artifact_id!r} does not exist in registry"
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Artifact not found",
+                        "details": f"Artifact {artifact_id!r} does not exist in registry",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Artifact {artifact_id!r} not found in registry")
         raise typer.Exit(1)
@@ -295,10 +325,15 @@ def registry_remove(
     is_forced = force or yes
     if not is_forced:
         if use_json:
-            print(json.dumps({
-                "error": "Confirmation required",
-                "details": "Use --force or --yes to skip confirmation prompt"
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Confirmation required",
+                        "details": "Use --force or --yes to skip confirmation prompt",
+                    },
+                    indent=2,
+                )
+            )
             raise typer.Exit(1)
         else:
             confirm = typer.confirm(f"Remove artifact {artifact_id!r} from registry?")
@@ -310,19 +345,13 @@ def registry_remove(
         registry_manager.remove_artifact(artifact_id)
     except RegistryError as exc:
         if use_json:
-            print(json.dumps({
-                "error": "Failed to remove artifact",
-                "details": str(exc)
-            }, indent=2))
+            print(json.dumps({"error": "Failed to remove artifact", "details": str(exc)}, indent=2))
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
 
     if use_json:
-        print(json.dumps({
-            "status": "ok",
-            "removed": artifact_id
-        }, indent=2))
+        print(json.dumps({"status": "ok", "removed": artifact_id}, indent=2))
     else:
         console.print(f"[green]Removed artifact:[/green] {artifact_id}")
 
@@ -346,19 +375,13 @@ def registry_validate(
         is_valid, errors = registry_manager.validate()
     except RegistryError as exc:
         if use_json:
-            print(json.dumps({
-                "valid": False,
-                "errors": [str(exc)]
-            }, indent=2))
+            print(json.dumps({"valid": False, "errors": [str(exc)]}, indent=2))
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
 
     if use_json:
-        print(json.dumps({
-            "valid": is_valid,
-            "errors": errors
-        }, indent=2))
+        print(json.dumps({"valid": is_valid, "errors": errors}, indent=2))
         if not is_valid:
             raise typer.Exit(1)
     else:
@@ -391,10 +414,7 @@ def registry_show(
         registry = registry_manager.read()
     except RegistryError as exc:
         if use_json:
-            print(json.dumps({
-                "error": "Registry error",
-                "details": str(exc)
-            }, indent=2))
+            print(json.dumps({"error": "Registry error", "details": str(exc)}, indent=2))
         else:
             console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
@@ -402,10 +422,15 @@ def registry_show(
     artifacts = registry.get("artifacts", {})
     if artifact_id not in artifacts:
         if use_json:
-            print(json.dumps({
-                "error": "Artifact not found",
-                "details": f"Artifact {artifact_id!r} does not exist in registry"
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "error": "Artifact not found",
+                        "details": f"Artifact {artifact_id!r} does not exist in registry",
+                    },
+                    indent=2,
+                )
+            )
         else:
             console.print(f"[red]Error:[/red] Artifact {artifact_id!r} not found in registry")
         raise typer.Exit(1)

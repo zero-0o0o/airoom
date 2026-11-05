@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-import sys
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -10,10 +9,10 @@ import typer
 from rich.console import Console
 
 from airoom import __version__
-from airoom.core.atomic import atomic_write, compute_file_hash, AtomicWriteError
+from airoom.core.atomic import atomic_write, compute_file_hash
 from airoom.core.baseline import BaselineManager
-from airoom.core.project import Project, assert_safe_project_path, find_project_root
-from airoom.core.registry import RegistryManager, parse_registry, dump_registry
+from airoom.core.project import Project, find_project_root
+from airoom.core.registry import parse_registry, dump_registry
 from airoom.core.resources import ResourceManager
 from airoom.core.version import read_version_file, write_version_file
 from airoom.core.logging import get_logger
@@ -90,7 +89,9 @@ def update_skill(
         # Skill directory exists but SKILL.md is missing - add it
         if dry_run:
             if verbose:
-                console.print(f"  [yellow]Dry run:[/yellow] Would add missing SKILL.md for: {skill_name}")
+                console.print(
+                    f"  [yellow]Dry run:[/yellow] Would add missing SKILL.md for: {skill_name}"
+                )
             return {"status": "added", "message": f"Would add missing SKILL.md for: {skill_name}"}
         try:
             if baseline_hash is not None:
@@ -160,7 +161,9 @@ def update_registry(
         # No existing registry - create from template
         if dry_run:
             if verbose:
-                console.print("  [yellow]Dry run:[/yellow] Would create registry.yaml from template")
+                console.print(
+                    "  [yellow]Dry run:[/yellow] Would create registry.yaml from template"
+                )
             return {"status": "added", "message": "Would create registry.yaml from template"}
         try:
             template_data = parse_registry(packaged_content)
@@ -268,7 +271,9 @@ def update_agents_md(
                 new_content = content[:start_idx] + airoom_section + content[end_marker_end:]
                 if dry_run:
                     if verbose:
-                        console.print("  [yellow]Dry run:[/yellow] Would update AIroom section in AGENTS.md")
+                        console.print(
+                            "  [yellow]Dry run:[/yellow] Would update AIroom section in AGENTS.md"
+                        )
                     return True
                 atomic_write(agents_path, new_content, expected_text=content)
                 if verbose:
@@ -282,7 +287,9 @@ def update_agents_md(
             new_content = content + "\n" + airoom_section + "\n"
             if dry_run:
                 if verbose:
-                    console.print("  [yellow]Dry run:[/yellow] Would add AIroom section to AGENTS.md")
+                    console.print(
+                        "  [yellow]Dry run:[/yellow] Would add AIroom section to AGENTS.md"
+                    )
                 return True
             atomic_write(agents_path, new_content, expected_text=original_content)
             if verbose:
@@ -292,7 +299,9 @@ def update_agents_md(
         # File doesn't exist - create it with just the AIroom section
         if dry_run:
             if verbose:
-                console.print("  [yellow]Dry run:[/yellow] Would create AGENTS.md with AIroom section")
+                console.print(
+                    "  [yellow]Dry run:[/yellow] Would create AGENTS.md with AIroom section"
+                )
             return True
         atomic_write(agents_path, airoom_section + "\n", expected_absent=True)
         if verbose:
@@ -301,7 +310,10 @@ def update_agents_md(
 
 
 def update_agents_md_section(
-    project_root: Path, verbose: bool = True, baseline_hash: str | None = None, dry_run: bool = False
+    project_root: Path,
+    verbose: bool = True,
+    baseline_hash: str | None = None,
+    dry_run: bool = False,
 ) -> dict:
     """Update the AIroom section in root AGENTS.md.
 
@@ -364,7 +376,7 @@ def update_airoom_md(
         # File doesn't exist - create it
         if dry_run:
             if verbose:
-                console.print(f"  [yellow]Dry run:[/yellow] Would create AIROOM.md from template")
+                console.print("  [yellow]Dry run:[/yellow] Would create AIROOM.md from template")
             return {"status": "added", "message": "Would create AIROOM.md from template"}
         try:
             if baseline_hash is not None:
@@ -482,9 +494,18 @@ def update(
         raise typer.Exit(1)
 
     # Check if AIroom is initialized
-    if project.airoom_dir.is_symlink() or not project.airoom_dir.exists() or not project.airoom_dir.is_dir():
+    if (
+        project.airoom_dir.is_symlink()
+        or not project.airoom_dir.exists()
+        or not project.airoom_dir.is_dir()
+    ):
         if json_output:
-            print(json.dumps({"error": "AIroom not initialized in this project. Run 'airoom init' first."}, indent=2))
+            print(
+                json.dumps(
+                    {"error": "AIroom not initialized in this project. Run 'airoom init' first."},
+                    indent=2,
+                )
+            )
         else:
             console.print(
                 "[red]Error:[/red] AIroom not initialized in this project. Run 'airoom init' first."
@@ -565,7 +586,9 @@ def update(
     # 2. Update registry.yaml
     if verbose_level > 0:
         console.print("\nUpdating registry...")
-    registry_result = update_registry(project.registry_path, verbose=verbose_level > 0, dry_run=dry_run)
+    registry_result = update_registry(
+        project.registry_path, verbose=verbose_level > 0, dry_run=dry_run
+    )
     results["registry"] = registry_result
     if registry_result["status"] == "error":
         results["errors"].append(f"Registry: {registry_result['message']}")
@@ -574,7 +597,10 @@ def update(
     if verbose_level > 0:
         console.print("\nUpdating AGENTS.md...")
     agents_result = update_agents_md_section(
-        project.root, verbose=verbose_level > 0, baseline_hash=baseline.get("AGENTS.md#airoom-section"), dry_run=dry_run
+        project.root,
+        verbose=verbose_level > 0,
+        baseline_hash=baseline.get("AGENTS.md#airoom-section"),
+        dry_run=dry_run,
     )
     results["agents_md"] = agents_result
     if agents_result["status"] == "error":
@@ -595,7 +621,10 @@ def update(
     if verbose_level > 0:
         console.print("\nUpdating AIROOM.md...")
     airoom_md_result = update_airoom_md(
-        project.airoom_dir, verbose=verbose_level > 0, baseline_hash=baseline.get("AIROOM.md"), dry_run=dry_run
+        project.airoom_dir,
+        verbose=verbose_level > 0,
+        baseline_hash=baseline.get("AIROOM.md"),
+        dry_run=dry_run,
     )
     results["airoom_md"] = airoom_md_result
     if airoom_md_result["status"] == "error":
@@ -753,8 +782,17 @@ def update(
     raise typer.Exit(1 if has_errors else 0)
 
 
-update_app = typer.Typer(name="update", help="Update project resources", invoke_without_command=True)
+update_app = typer.Typer(
+    name="update", help="Update project resources", invoke_without_command=True
+)
 update_app.callback()(update)
 
 
-__all__ = ["update", "update_skill", "update_registry", "update_agents_md_section", "update_airoom_md", "update_app"]
+__all__ = [
+    "update",
+    "update_skill",
+    "update_registry",
+    "update_agents_md_section",
+    "update_airoom_md",
+    "update_app",
+]

@@ -66,6 +66,7 @@ class TestAtomicWrite:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_write_new_file(self):
@@ -100,6 +101,7 @@ class TestAtomicWrite:
         target.write_text("concurrent update", encoding="utf-8")
 
         from airoom.core.atomic import AtomicWriteError
+
         with pytest.raises(AtomicWriteError, match="concurrent modification"):
             atomic_write(target, "replacement", expected_text=original)
         # File should be unchanged (still has concurrent update)
@@ -113,6 +115,7 @@ class TestAtomicWrite:
         target.write_text("concurrent creation", encoding="utf-8")
 
         from airoom.core.atomic import AtomicWriteError
+
         with pytest.raises(AtomicWriteError, match="concurrent creation"):
             atomic_write(target, "our content", expected_absent=True)
         # File should be unchanged
@@ -131,9 +134,9 @@ class TestAtomicWrite:
         target.write_text("original", encoding="utf-8")
         target.chmod(0o600)
         original_mode = target.stat().st_mode & 0o777
-        
+
         atomic_write(target, "updated", expected_text="original")
-        
+
         new_mode = target.stat().st_mode & 0o777
         assert new_mode == original_mode
         assert target.read_text(encoding="utf-8") == "updated"
@@ -142,7 +145,7 @@ class TestAtomicWrite:
         """Test default permissions (0o644) for new files."""
         target = self.tmp_path / "new_perm.txt"
         atomic_write(target, "content")
-        
+
         mode = target.stat().st_mode & 0o777
         assert mode == 0o644
 
@@ -150,23 +153,24 @@ class TestAtomicWrite:
         """Test that temp files are cleaned up even on error."""
         target = self.tmp_path / "error_test.txt"
         target.write_text("original", encoding="utf-8")
-        
+
         from airoom.core.atomic import AtomicWriteError
+
         with pytest.raises(AtomicWriteError):
             atomic_write(target, "updated", expected_text="wrong_expected")
-        
+
         assert list(self.tmp_path.glob("*.tmp")) == []
 
     def test_concurrent_modification_second_check(self):
         """Test that concurrent modification is caught by the second check.
-        
+
         This simulates a race where the file is modified after the temp file
         is written but before the atomic replace.
         """
         target = self.tmp_path / "second_check.txt"
         target.write_text("original", encoding="utf-8")
         original = target.read_text()
-        
+
         # We can't easily test the second check in isolation due to timing,
         # but we can verify the double-check logic exists by ensuring
         # the first check works (tested in test_concurrent_modification_detected)
