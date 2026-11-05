@@ -6,6 +6,8 @@ for backward compatibility.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from airoom.core.atomic import atomic_write as _core_atomic_write, AtomicWriteError
 from airoom.core.registry import (
     RegistryError,
@@ -45,4 +47,3 @@ __all__ = [
     "atomic_write",
     "dump_registry",
 ]
-
