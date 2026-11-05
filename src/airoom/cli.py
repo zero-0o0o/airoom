@@ -9,7 +9,6 @@ from rich.console import Console
 
 from airoom import __version__
 from airoom.commands.init import init_command
-from airoom.commands.upgrade import upgrade_command
 from airoom.commands.uninstall import uninstall_command
 from airoom.commands_typer.status import status
 from airoom.commands_typer.doctor import doctor
@@ -20,6 +19,7 @@ from airoom.commands_typer.config import config_app
 from airoom.commands_typer.completion import completion_app
 from airoom.commands_typer.init import init_app
 from airoom.commands_typer.update import update_app
+from airoom.commands_typer.upgrade import upgrade_app
 from airoom.core.logging import configure_logging
 from airoom.core.types import GlobalOptions
 
@@ -207,9 +207,9 @@ app.add_typer(config_app, name="config")
 app.add_typer(completion_app, name="completion")
 app.add_typer(init_app, name="init")
 app.add_typer(update_app, name="update")
+app.add_typer(upgrade_app, name="upgrade")
 
 # Register legacy commands at top level (for backward compatibility) - hidden from help
-app.command("upgrade", help="Upgrade the global CLI", hidden=True)(_legacy_upgrade)
 app.command("uninstall", help="Uninstall the global CLI", hidden=True)(_legacy_uninstall)
 
 # Register legacy commands under legacy subcommand group (visible in help)
