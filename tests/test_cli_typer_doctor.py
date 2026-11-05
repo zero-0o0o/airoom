@@ -180,7 +180,6 @@ class TestDoctorCommand:
             # Modify a tracked resource file
             skill_file = Path(tmpdir) / "airoom" / "skills" / "artifact-discovery" / "SKILL.md"
             if skill_file.exists():
-                original_content = skill_file.read_text()
                 skill_file.write_text("# Modified Skill\n\nContent changed.", encoding="utf-8")
 
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--fix", "--json"])
@@ -365,7 +364,6 @@ class TestDoctorCommand:
 
             result = self.runner.invoke(app, ["--path", tmpdir, "doctor", "--fix", "--json"])
             assert result.exit_code == 0
-            data = json.loads(result.stdout)
             # Should have fixed the missing directories
             assert skills_dir.exists()
             assert artifacts_dir.exists()

@@ -75,7 +75,6 @@ class TestDoctorDryRun:
 
     def test_doctor_fix_without_dry_run_writes(self, runner: CliRunner, temp_project: Path) -> None:
         """Verify that --fix without --dry-run does write (sanity check)."""
-        before = _get_project_files(temp_project)
         result = runner.invoke(app, ["--path", str(temp_project), "doctor", "--fix"])
         assert result.exit_code == 0, f"Doctor --fix failed: {result.output}"
         # This should have written something (though may be no-op if everything is clean)

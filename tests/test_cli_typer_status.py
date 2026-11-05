@@ -135,7 +135,6 @@ class TestStatusCommand:
             self._init_project(tmpdir)
             # Add a managed artifact to registry but don't create the file
             registry_file = Path(tmpdir) / "airoom" / "registry.yaml"
-            import yaml
             from ruamel.yaml import YAML
 
             yaml = YAML()

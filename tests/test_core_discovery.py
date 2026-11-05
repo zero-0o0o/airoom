@@ -452,7 +452,7 @@ class TestDiscoveryEngine:
         initial_registry = self.manager.read()
         initial_files = set(self.project_root.rglob("*"))
 
-        report = self.engine.scan()
+        self.engine.scan()
 
         # Registry should be unchanged
         assert self.manager.read() == initial_registry

@@ -256,7 +256,6 @@ def upgrade(
     # Use global options
     json_output = global_opts.json_output if global_opts else False
     dry_run = global_opts.dry_run if global_opts else False
-    verbose = global_opts.verbose if global_opts else 0
 
     if dry_run:
         log.info("Dry run: skipping upgrade")

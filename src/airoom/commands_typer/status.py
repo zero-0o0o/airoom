@@ -134,7 +134,6 @@ def _check_artifacts(project: Project, registry_manager: RegistryManager) -> dic
         if entry.get("status") != "active":
             continue
         path = entry.get("path")
-        management = entry.get("management")
         if not path:
             missing.append(f"{artifact_id}: no path")
             continue
