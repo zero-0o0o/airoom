@@ -1,6 +1,6 @@
 # AIROOM.md
 
-AIroom is the shared infrastructure and coordination layer for AI agents and tools. This file is the primary navigation entry point for AIroom resources in this project.
+AIroom is the shared infrastructure and coordination layer for AI agents and tools. This file is the primary navigation entry point for AIroom resources in this project. AI-generated files and folders are organized and managed inside a separate `airoom/` directory to keep the project clean, well-structured, and easy for both developers and AI agents to understand and maintain.
 
 ## Project Structure
 
